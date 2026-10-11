@@ -120,4 +120,17 @@ export const sfx = {
       { freq: C6, at: 0.48, duration: 0.45, volume: 0.06 },
       { freq: E5, at: 0.48, duration: 0.45, type: 'triangle', volume: 0.04 },
     ]),
+  /** Bilbo: a cheerful chirp. */
+  bilbo: () =>
+    play([
+      { freq: 988, duration: 0.05, volume: 0.04 },
+      { freq: 1319, at: 0.06, duration: 0.07, volume: 0.04 },
+    ]),
+  /** Gandalf: a low hum that rises into a sparkle. */
+  gandalf: () =>
+    play([
+      { freq: 147, slideTo: 294, duration: 0.25, type: 'triangle', volume: 0.08 },
+      { freq: 1568, at: 0.2, duration: 0.05, type: 'triangle', volume: 0.03 },
+      { freq: 2093, at: 0.26, duration: 0.08, type: 'triangle', volume: 0.03 },
+    ]),
 };

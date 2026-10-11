@@ -1,5 +1,6 @@
 import { CourseCard } from '@/components/CourseCard';
-import { DoorIcon } from '@/components/PixelArt';
+import { HomeScene } from '@/components/characters/HomeScene';
+import { HomeMusic } from '@/components/HomeMusic';
 import { TopBar } from '@/components/TopBar';
 import { api } from '@/lib/api';
 
@@ -13,7 +14,7 @@ export default async function CatalogPage() {
     <>
       <TopBar />
       <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-        <section className="flex flex-col items-start gap-6 py-14 sm:py-20 md:flex-row md:items-center md:justify-between">
+        <section className="flex flex-col items-start gap-10 py-14 sm:py-20 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <p className="font-pixel text-sm text-lime">Start your coding adventure</p>
             <h1 className="mt-4 font-pixel text-4xl leading-[1.15] sm:text-5xl">
@@ -23,8 +24,11 @@ export default async function CatalogPage() {
               Short lessons, real code. Every example runs in your browser, and every exercise is
               checked the moment you submit.
             </p>
+            <div className="mt-6">
+              <HomeMusic />
+            </div>
           </div>
-          <DoorIcon className="h-36 w-44 shrink-0 max-md:hidden" />
+          <HomeScene />
         </section>
 
         <h2 className="mb-6 font-pixel text-lg text-muted">Courses</h2>

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { api, ApiError, type Language, type RunResult } from '@/lib/api';
+import { emitOutcome } from '@/lib/events';
 import { sfx } from '@/lib/sound';
 import type { OutputState } from './TerminalOutput';
 
@@ -26,9 +27,11 @@ export function useCodeRunner(language: Language) {
         const result = await api.run(language, code);
         setOutput({ kind: 'run', result });
         (ranCleanly(result) ? sfx.runDone : sfx.error)();
+        emitOutcome({ kind: 'run', result });
       } catch (err) {
         setOutput({ kind: 'error', message: errorMessage(err) });
         sfx.error();
+        emitOutcome({ kind: 'request-failed' });
       }
     },
     [language],

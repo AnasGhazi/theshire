@@ -4,11 +4,13 @@ export function PixelArt({
   palette,
   className,
   title,
+  style,
 }: {
   rows: string[];
   palette: Record<string, string>;
   className?: string;
   title?: string;
+  style?: React.CSSProperties;
 }) {
   const width = Math.max(...rows.map((r) => r.length));
   return (
@@ -16,6 +18,7 @@ export function PixelArt({
       viewBox={`0 0 ${width} ${rows.length}`}
       shapeRendering="crispEdges"
       className={className}
+      style={style}
       role={title ? 'img' : undefined}
       aria-hidden={title ? undefined : true}
       aria-label={title}

@@ -4,7 +4,9 @@ import { CircleCheck, Copy, Ellipsis, Play, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type ExerciseBlock, type Language } from '@/lib/api';
+import { emitOutcome } from '@/lib/events';
 import { sfx } from '@/lib/sound';
+import { Companions } from '../characters/Companions';
 import { LanguageBadge } from '../LanguageBadge';
 import { useProgress } from '../ProgressProvider';
 import { CodeEditor } from './CodeEditor';
@@ -117,10 +119,12 @@ export function Workspace({
       setOutput({ kind: 'submit', result });
       if (!result.passed) sfx.error();
       else (result.lessonCompleted ? sfx.lessonComplete : sfx.success)();
+      emitOutcome({ kind: 'submit', result });
       if (result.passed) await refresh();
     } catch (err) {
       setOutput({ kind: 'error', message: errorMessage(err) });
       sfx.error();
+      emitOutcome({ kind: 'request-failed' });
     }
   }, [tab.exercise, busy, code, setOutput, refresh]);
 
@@ -240,7 +244,10 @@ export function Workspace({
 
       {/* Terminal */}
       <div className="flex h-[38%] min-h-56 shrink-0 flex-col border-t-4 border-line">
-        <div className="shrink-0 bg-band px-5 py-4 text-xl font-bold sm:px-8">Terminal</div>
+        <div className="flex shrink-0 items-end justify-between gap-4 bg-band px-5 pt-1 sm:px-8">
+          <span className="self-center py-3 text-xl font-bold">Terminal</span>
+          <Companions language={language} />
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-terminal px-5 py-5 sm:px-8">
           <TerminalOutput
             state={output}
