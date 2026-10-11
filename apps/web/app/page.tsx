@@ -28,7 +28,7 @@ export default async function CatalogPage() {
               <HomeMusic />
             </div>
           </div>
-          <HomeScene />
+          <HomeScene courses={courses} />
         </section>
 
         <h2 className="mb-6 font-pixel text-lg text-muted">Courses</h2>

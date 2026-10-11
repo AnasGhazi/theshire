@@ -1,3 +1,4 @@
+export * from './schemas/auth';
 export * from './schemas/content';
 export * from './schemas/error';
 export * from './schemas/exercise';

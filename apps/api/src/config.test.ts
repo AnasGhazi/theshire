@@ -23,4 +23,23 @@ describe('loadConfig', () => {
   ])('refuses to loosen %s past its safety cap', (name, value) => {
     expect(() => loadConfig({ [name]: value })).toThrow(new RegExp(name));
   });
+
+  it('leaves Google sign-in off unless both credentials are set', () => {
+    expect(loadConfig({}).google).toBeNull();
+    expect(loadConfig({ GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '' }).google).toBeNull();
+    expect(() => loadConfig({ GOOGLE_CLIENT_ID: 'id-only' })).toThrow(/set both GOOGLE_CLIENT_ID/);
+  });
+
+  it('derives the Google redirect URI from PUBLIC_URL', () => {
+    const { google } = loadConfig({
+      GOOGLE_CLIENT_ID: 'id',
+      GOOGLE_CLIENT_SECRET: 'secret',
+      PUBLIC_URL: 'https://shire.example.com',
+    });
+    expect(google).toEqual({
+      clientId: 'id',
+      clientSecret: 'secret',
+      redirectUri: 'https://shire.example.com/api/auth/google/callback',
+    });
+  });
 });

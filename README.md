@@ -78,7 +78,7 @@ flowchart LR
 - **A fresh container per run, created through the Docker CLI.** Simple to reason about, and no state can leak between learners. `create` and `start` are separate so Docker's own messages never mix into learner output, and the CLI runs with a private, empty config so host settings (like `~/.docker/config.json` proxies) can't reach the sandbox.
 - **One container per test when grading.** Tests can't interfere with each other, and there's no in-sandbox grader to tamper with. Hidden tests return only a status, never their input or expected output.
 - **Content fails at startup, not at request time.** The loader validates every lesson, reports every problem with `file:line`, and the server refuses to start on bad content. CI also runs every reference solution (must pass) and every starter template (must fail) through the real sandbox.
-- **Anonymous identity behind one seam.** A signed, HTTP-only cookie sets `request.learnerId`. Route handlers never read cookies, so real auth can replace it.
+- **Identity behind one seam.** A Google session or, failing that, an anonymous signed cookie sets `request.learnerId`. Route handlers never read cookies, which is how Google sign-in was added without touching them.
 - **Schemas are the contract.** Shared Zod schemas validate both sides, and [docs/api.md](docs/api.md) is generated from the schemas registered on the routes; a test fails if it drifts.
 - **Limits can't be loosened by accident.** Sandbox settings come from validated env vars with hard caps, and unit tests pin every Docker flag.
 - **Forgiving grading, with feedback.** `hello, Shire!` passes a test expecting `Hello, Shire!`, with a note showing the exact form. Different words, numbers, or line structure still fail.
@@ -126,12 +126,24 @@ All settings are environment variables, validated at startup. Sandbox limits hav
 | `SANDBOX_MAX_CONCURRENT` / `SANDBOX_MAX_QUEUE` | 4 / 20                                     |
 | `SANDBOX_PYTHON_IMAGE` / `SANDBOX_NODE_IMAGE`  | `theshire/runner-{python,node}:latest`     |
 | `RATE_LIMIT_PER_LEARNER` / `RATE_LIMIT_PER_IP` | 30 / 120 per minute                        |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`    | unset (Google sign-in hidden)              |
+| `PUBLIC_URL`                                   | `http://localhost:3000`                    |
 | `COOKIE_SECRET`                                | dev-only value; **required** in production |
 | `COOKIE_SECURE`                                | `true` in production                       |
 | `TRUST_PROXY`                                  | `false` (or a proxy hop count)             |
 | `DATABASE_PATH`                                | `data/theshire.db`                         |
 | `COURSES_DIR`                                  | nearest `content/courses`                  |
 | `LOG_LEVEL`                                    | `info`                                     |
+
+## Sign in with Google (optional)
+
+Visitors can always learn anonymously. To let them sign in so progress follows their Google account across devices:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), configure the OAuth consent screen, then create an **OAuth client ID** of type **Web application**.
+2. Add `http://localhost:3000/api/auth/google/callback` as an **Authorized redirect URI** (for production, `<your site>/api/auth/google/callback`, and set `PUBLIC_URL` to match).
+3. Copy `.env.example` to `.env` and fill in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, then `docker compose up --build`.
+
+A "Sign in with Google" button appears in the top bar. When someone signs in, the progress they made anonymously in that browser is merged into their account; signing out leaves the browser as a fresh anonymous learner.
 
 ## Writing lessons
 
@@ -183,7 +195,7 @@ Each test runs the learner's code followed by `call` and compares stdout with `e
 - **Containers share the host kernel.** For stronger isolation, swap in gVisor (`--runtime runsc`) or microVMs. See [docs/security.md](docs/security.md#known-limitations).
 - **The API holds the Docker socket**, which is root-equivalent on that host. Deploy it on a dedicated VM.
 - **Single instance.** Rate limits and the concurrency limiter live in memory, and SQLite is local. Scaling out needs shared counters and Postgres; the repository interface is ready for it.
-- **No accounts.** Progress is tied to a browser cookie; clearing cookies starts over.
+- **Accounts are Google-only.** Without Google sign-in configured (or for visitors who don't sign in), progress lives in a browser cookie.
 - **No stdin.** Programs that call `input()` get end-of-file.
 - **Output-based grading.** Exercises must print deterministic text; lenient matching forgives formatting, not different values.
 

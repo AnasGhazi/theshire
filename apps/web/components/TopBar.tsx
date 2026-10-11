@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AccountMenu } from './AccountMenu';
 import { Logo } from './Logo';
 import { SandboxStatus } from './SandboxStatus';
 import { SoundToggle } from './SoundEffects';
@@ -46,12 +47,13 @@ export function TopBar({
         </nav>
       )}
       <div className="max-lg:hidden">{children}</div>
-      <div className="ml-auto flex items-center gap-5">
+      <div className="ml-auto flex items-center gap-3 sm:gap-5">
         <SandboxStatus />
         <SoundToggle />
         <Link href="/" className="btn btn-yellow btn-sm max-sm:hidden">
           Courses
         </Link>
+        <AccountMenu />
       </div>
     </header>
   );

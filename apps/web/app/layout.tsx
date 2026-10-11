@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Nunito, Pixelify_Sans } from 'next/font/google';
+import { AuthProvider } from '@/components/AuthProvider';
 import { ProgressProvider } from '@/components/ProgressProvider';
 import { ButtonClickSounds } from '@/components/SoundEffects';
+import { WhirlTransition } from '@/components/WhirlTransition';
 import './globals.css';
 
 const pixelify = Pixelify_Sans({ subsets: ['latin'], variable: '--font-pixelify' });
@@ -17,8 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${pixelify.variable} ${nunito.variable} ${jetbrains.variable}`}>
       <body className="min-h-dvh font-sans antialiased">
-        <ProgressProvider>{children}</ProgressProvider>
+        <ProgressProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ProgressProvider>
         <ButtonClickSounds />
+        <WhirlTransition />
       </body>
     </html>
   );

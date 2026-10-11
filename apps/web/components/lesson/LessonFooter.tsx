@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { sfx } from '@/lib/sound';
+import { useAuth } from '../AuthProvider';
 import { useProgress } from '../ProgressProvider';
 import { errorMessage } from './useCodeRunner';
 
@@ -23,15 +24,29 @@ export function LessonFooter({
   courseHref: string;
 }) {
   const { isLessonComplete, setProgress } = useProgress();
+  const { auth } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const done = isLessonComplete(lessonId);
 
   return (
     <div className="flex flex-col gap-5 border-t-2 border-line px-6 py-8 sm:px-8">
       {done ? (
-        <p className="pop-in flex items-center gap-3 rounded-lg border-3 border-[#5f9d3a] bg-[#1d3a12]/60 px-4 py-3 font-pixel text-[#c9f78f]">
-          <CircleCheck className="size-5" aria-hidden /> Lesson complete
-        </p>
+        <>
+          <p className="pop-in flex items-center gap-3 rounded-lg border-3 border-[#5f9d3a] bg-[#1d3a12]/60 px-4 py-3 font-pixel text-[#c9f78f]">
+            <CircleCheck className="size-5" aria-hidden /> Lesson complete
+          </p>
+          {auth?.googleEnabled && !auth.user && (
+            <p className="text-muted">
+              <a
+                href={api.auth.googleSignInUrl(`/lessons/${lessonId}`)}
+                className="text-link hover:underline"
+              >
+                Sign in with Google
+              </a>{' '}
+              to keep your progress on every device.
+            </p>
+          )}
+        </>
       ) : hasExercises ? (
         <p className="text-muted">Pass the exercise to complete this lesson.</p>
       ) : (

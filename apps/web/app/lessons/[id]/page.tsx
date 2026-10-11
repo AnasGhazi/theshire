@@ -8,6 +8,7 @@ import { exerciseFileName } from '@/components/lesson/files';
 import { Hint } from '@/components/lesson/Hint';
 import { LessonFooter } from '@/components/lesson/LessonFooter';
 import { Markdown } from '@/components/lesson/Markdown';
+import { RememberLesson } from '@/components/lesson/RememberLesson';
 import { RunnableCell } from '@/components/lesson/RunnableCell';
 import { Workspace } from '@/components/lesson/Workspace';
 import { TopBar } from '@/components/TopBar';
@@ -45,6 +46,7 @@ export default async function LessonPage({ params }: Props) {
 
   return (
     <div className="flex flex-col lg:h-dvh">
+      <RememberLesson id={lesson.id} title={lesson.title} />
       <TopBar
         crumbs={[
           { label: LANGUAGE_NAMES[lesson.course.language], href: courseHref },

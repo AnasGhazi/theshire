@@ -12,11 +12,14 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import type { DockerStatus, ErrorResponse } from '@theshire/shared';
+import type { AccountRepository } from './accounts/repository';
+import type { GoogleAuth } from './auth/google';
 import type { ContentIndex } from './content/load-content';
 import { AppError } from './errors';
-import { registerAnonymousIdentity } from './identity';
+import { registerIdentity } from './identity';
 import type { ProgressRepository } from './progress/repository';
 import { createRateLimitHook, type RateLimitSettings } from './rate-limit';
+import { authRoutes } from './routes/auth';
 import { contentRoutes } from './routes/content';
 import { exerciseRoutes } from './routes/exercises';
 import { healthRoutes } from './routes/health';
@@ -29,6 +32,9 @@ export interface AppDeps {
   runner: Runner;
   content: ContentIndex;
   progress: ProgressRepository;
+  accounts: AccountRepository;
+  /** Null when Google sign-in isn't configured. */
+  google: GoogleAuth | null;
 }
 
 export interface AppSettings {
@@ -65,7 +71,7 @@ export async function buildApp({ deps, settings, logger = false, onRoute }: Buil
   };
   const base = Fastify(options);
   if (onRoute) base.addHook('onRoute', onRoute);
-  await registerAnonymousIdentity(base, settings);
+  await registerIdentity(base, { ...settings, accounts: deps.accounts });
 
   const app = base.withTypeProvider<ZodTypeProvider>();
   app.addHook('onSend', async (request, reply) => {
@@ -104,6 +110,12 @@ export async function buildApp({ deps, settings, logger = false, onRoute }: Buil
   await app.register(contentRoutes, { prefix, content: deps.content });
   await app.register(exerciseRoutes, { prefix, ...deps, rateLimit });
   await app.register(progressRoutes, { prefix, ...deps });
+  await app.register(authRoutes, {
+    prefix,
+    accounts: deps.accounts,
+    google: deps.google,
+    secureCookies: settings.secureCookies,
+  });
 
   return app;
 }

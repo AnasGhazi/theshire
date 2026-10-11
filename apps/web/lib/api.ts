@@ -3,6 +3,7 @@
  * through this file, and every response is validated against the shared Zod schemas.
  */
 import {
+  AuthState,
   CourseDetail,
   CourseList,
   ErrorResponse,
@@ -16,6 +17,8 @@ import {
 import type { z } from 'zod';
 
 export type {
+  AccountUser,
+  AuthState,
   CourseDetail,
   CourseSummary,
   ExerciseBlock,
@@ -98,6 +101,14 @@ export const api = {
     ),
 
   progress: () => request(Progress, '/api/progress'),
+
+  auth: {
+    me: () => request(AuthState, '/api/auth/me'),
+    logout: () => request(AuthState, '/api/auth/logout', { method: 'POST' }),
+    /** A full-page navigation target (not a fetch): Google sign-in, returning to `returnTo`. */
+    googleSignInUrl: (returnTo: string) =>
+      `/api/auth/google/login?returnTo=${encodeURIComponent(returnTo)}`,
+  },
   completeLesson: (lessonId: string) =>
     request(Progress, `/api/progress/${encodeURIComponent(lessonId)}`, { method: 'PUT' }),
 };

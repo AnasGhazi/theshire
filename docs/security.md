@@ -102,3 +102,15 @@ Deployment plan (M6):
 - Each test runs the learner's code plus that test's call in its **own** fresh container, so tests can't interfere with each other and the program has no grader code to tamper with.
 - Hidden tests return only a status (`passed`, `wrong_output`, `error`, `timeout`, ...). Their call, expected output, and the program's output never leave the server. Reference solutions are never sent to clients.
 - The sandbox suite runs every reference solution (must pass) and every starter template (must fail) against the real sandbox, so broken course content is caught in CI.
+
+## Accounts and sign-in
+
+"Sign in with Google" uses the OAuth 2.0 authorization code flow, handled entirely by the API:
+
+- **PKCE (S256), `state`, and `nonce`** are generated per attempt and kept in a signed, HTTP-only cookie scoped to `/api/auth/google` that expires in 10 minutes. A callback without that cookie, or with a mismatched `state`, is rejected (login CSRF / injection).
+- **The ID token is verified** with Google's published keys (`jose`): signature, issuer, audience (our client ID), expiry, and nonce. Emails are only stored when Google marks them verified.
+- **Sessions are server-side** and revocable. The cookie carries a random 256-bit token; the database stores only its SHA-256 hash. Sessions last 30 days; signing out deletes the row, so a copied cookie stops working.
+- **Redirects can't be hijacked.** `returnTo` must be a same-site path; anything else (`//evil.example`, `https://...`, `javascript:`) falls back to `/`.
+- **Identities don't bleed between people.** On sign-in the browser's anonymous progress is merged into the account (attempts add up, earliest timestamps win) and the anonymous cookie is replaced; on sign-out the browser gets a fresh anonymous learner that can't see the account's progress.
+
+These behaviors are covered by tests against a stand-in Google that signs tokens with a local key, including forged signatures, wrong audience or issuer, expired tokens, replayed nonces, cancelled consent, and missing flow cookies.

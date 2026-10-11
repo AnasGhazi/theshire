@@ -26,6 +26,10 @@ services:
       COOKIE_SECURE: 'false'
       # Requests arrive through the web container's /api proxy; use its X-Forwarded-For.
       TRUST_PROXY: '1'
+      # Google sign-in: set these in a .env file next to this one (see .env.example).
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     ports:
       - '4000:4000'
     # Lets the API start sibling sandbox containers on the host daemon. This is root-equivalent

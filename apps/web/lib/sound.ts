@@ -133,4 +133,25 @@ export const sfx = {
       { freq: 1568, at: 0.2, duration: 0.05, type: 'triangle', volume: 0.03 },
       { freq: 2093, at: 0.26, duration: 0.08, type: 'triangle', volume: 0.03 },
     ]),
+  /** A creaky round door swinging open. */
+  door: () =>
+    play([
+      { freq: 330, slideTo: 196, duration: 0.18, volume: 0.035 },
+      { freq: 262, slideTo: 175, at: 0.16, duration: 0.22, volume: 0.03 },
+      { freq: 98, at: 0.36, duration: 0.08, type: 'triangle', volume: 0.08 },
+    ]),
+  /** A rising magical shimmer for the whirl transition. */
+  whirl: () =>
+    play(
+      [523.25, 659.25, 783.99, 987.77, 1174.66, 1318.51, 1567.98, 2093].flatMap((freq, i) => [
+        { freq, at: i * 0.055, duration: 0.12, type: 'triangle' as const, volume: 0.04 },
+        {
+          freq: freq * 1.5,
+          at: i * 0.055 + 0.02,
+          duration: 0.08,
+          type: 'sine' as const,
+          volume: 0.02,
+        },
+      ]),
+    ),
 };

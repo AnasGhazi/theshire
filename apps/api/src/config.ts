@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
 import type { AppSettings } from './app';
+import type { GoogleAuthConfig } from './auth/google';
 import type { SandboxOptions } from './sandbox/types';
 
 // Upper bounds keep a misconfigured environment from quietly loosening the sandbox.
@@ -30,6 +31,11 @@ const Env = z.object({
       ctx.addIssue({ code: 'custom', message: 'must be true, false, or a hop count' });
       return z.NEVER;
     }),
+  /** Public origin of the web app; used to build the Google redirect URI. */
+  PUBLIC_URL: z.url().default('http://localhost:3000'),
+  /** Both set to enable "Sign in with Google". Empty values count as unset. */
+  GOOGLE_CLIENT_ID: z.preprocess((v) => v || undefined, z.string().optional()),
+  GOOGLE_CLIENT_SECRET: z.preprocess((v) => v || undefined, z.string().optional()),
   RATE_LIMIT_PER_LEARNER: z.coerce.number().int().min(1).default(30),
   RATE_LIMIT_PER_IP: z.coerce.number().int().min(1).default(120),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
@@ -58,6 +64,8 @@ export interface Config {
   logLevel: z.infer<typeof Env>['LOG_LEVEL'];
   coursesDir: string;
   databasePath: string;
+  /** Null when Google sign-in is not configured. */
+  google: GoogleAuthConfig | null;
   app: AppSettings;
   sandbox: SandboxOptions & {
     maxConcurrent: number;
@@ -73,6 +81,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   const e = result.data;
   const production = e.NODE_ENV === 'production';
+  if (Boolean(e.GOOGLE_CLIENT_ID) !== Boolean(e.GOOGLE_CLIENT_SECRET)) {
+    throw new Error(
+      'Invalid environment configuration: set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or neither',
+    );
+  }
   if (production && !e.COOKIE_SECRET) {
     throw new Error('Invalid environment configuration: COOKIE_SECRET is required in production');
   }
@@ -82,6 +95,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     logLevel: e.LOG_LEVEL,
     coursesDir: e.COURSES_DIR ? resolve(e.COURSES_DIR) : findCoursesDir(),
     databasePath: e.DATABASE_PATH,
+    google:
+      e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET
+        ? {
+            clientId: e.GOOGLE_CLIENT_ID,
+            clientSecret: e.GOOGLE_CLIENT_SECRET,
+            redirectUri: new URL('/api/auth/google/callback', e.PUBLIC_URL).toString(),
+          }
+        : null,
     app: {
       cookieSecret: e.COOKIE_SECRET ?? DEV_COOKIE_SECRET,
       secureCookies: e.COOKIE_SECURE ? e.COOKIE_SECURE === 'true' : production,

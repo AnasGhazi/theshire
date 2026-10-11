@@ -1,4 +1,6 @@
+import { SqliteAccountRepository } from './accounts/repository';
 import { buildApp } from './app';
+import { GoogleAuth } from './auth/google';
 import { loadConfig } from './config';
 import { loadContent } from './content/load-content';
 import { openDatabase } from './db/database';
@@ -23,9 +25,17 @@ const app = await buildApp({
     runner: limitRunner(dockerRunner, limiter),
     content,
     progress: new SqliteProgressRepository(db),
+    accounts: new SqliteAccountRepository(db),
+    google: config.google && new GoogleAuth(config.google),
   },
 });
 app.log.info({ courses: content.courses.length, dir: config.coursesDir }, 'loaded course content');
+app.log.info(
+  config.google
+    ? { redirectUri: config.google.redirectUri }
+    : { hint: 'set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable it' },
+  config.google ? 'google sign-in enabled' : 'google sign-in disabled',
+);
 
 const stopCleanup = startCleanupJob({
   intervalMs: config.sandbox.cleanupIntervalMs,

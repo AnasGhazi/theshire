@@ -43,6 +43,6 @@ describe('migrations', () => {
     const db = openDatabase(':memory:');
     expect(migrate(db)).toEqual([]);
     const versions = db.prepare('SELECT version FROM schema_migrations').all();
-    expect(versions).toEqual([{ version: 1 }]);
+    expect(versions).toEqual([{ version: 1 }, { version: 2 }]);
   });
 });
