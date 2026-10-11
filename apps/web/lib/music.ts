@@ -55,7 +55,8 @@ export function preloadMusic(onProgress: (fraction: number) => void = () => {}):
   return loading;
 }
 
-const MUSIC_KEY = 'theshire:music';
+// Versioned: an earlier title screen could save "off" without people meaning to keep it off.
+const MUSIC_KEY = 'theshire:music-v2';
 const listeners = new Set<() => void>();
 
 /** The learner's music on/off choice, remembered per browser (on by default). */
