@@ -1,0 +1,64 @@
+# Production overrides, used on the server with prebuilt images (see docs/deploy.md):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Differences from local: nothing but Caddy is published, HTTPS everywhere, secrets required,
+# containers restart on failure or reboot, and logs are size-capped.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  runner-python:
+    build: !reset null
+    pull_policy: never
+
+  runner-node:
+    build: !reset null
+    pull_policy: never
+
+  api:
+    build: !reset null
+    pull_policy: never
+    ports: !reset []
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      NODE_ENV: production
+      COOKIE_SECRET: ${COOKIE_SECRET:?set COOKIE_SECRET in .env}
+      COOKIE_SECURE: 'true'
+      PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL in .env}
+      # Requests pass Caddy, then the web app's /api proxy: trust those two hops for client IPs.
+      TRUST_PROXY: '2'
+      # Sized for a 1 GB instance (each run may use up to 128 MB); raise on bigger servers.
+      SANDBOX_MAX_CONCURRENT: ${SANDBOX_MAX_CONCURRENT:-2}
+      SANDBOX_MAX_QUEUE: ${SANDBOX_MAX_QUEUE:-20}
+
+  web:
+    build: !reset null
+    pull_policy: never
+    ports: !reset []
+    restart: unless-stopped
+    logging: *logging
+
+  caddy:
+    image: caddy:2.11.7-alpine
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+
+volumes:
+  caddy-data:
+  caddy-config:

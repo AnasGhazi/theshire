@@ -1,3 +1,5 @@
+name: theshire
+
 services:
   # Build-only services: they produce the sandbox images the API runs code in, then exit.
   runner-python:
@@ -15,6 +17,7 @@ services:
     restart: 'no'
 
   api:
+    image: theshire-api:latest
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -44,6 +47,7 @@ services:
         condition: service_completed_successfully
 
   web:
+    image: theshire-web:latest
     build:
       context: .
       dockerfile: apps/web/Dockerfile
