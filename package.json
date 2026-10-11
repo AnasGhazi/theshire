@@ -21,11 +21,13 @@
     "test:coverage": "vitest run --coverage",
     "runner:build": "docker build -t theshire/runner-python:latest runner/images/python && docker build -t theshire/runner-node:latest runner/images/node",
     "test:sandbox": "vitest run --config apps/api/vitest.sandbox.config.ts",
-    "sandbox:report": "tsx apps/api/scripts/sandbox-report.ts"
+    "sandbox:report": "tsx apps/api/scripts/sandbox-report.ts",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@next/eslint-plugin-next": "^16.4.0",
+    "@playwright/test": "^1.64.0",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^4.1.11",
     "concurrently": "^10.0.6",

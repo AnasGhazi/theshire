@@ -32,3 +32,23 @@ jobs:
       - run: npm ci
       - run: npm run runner:build
       - run: npm run test:sandbox
+
+  e2e:
+    # Boots the whole stack with docker compose and drives it with a real browser.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: docker compose up -d --build
+      - name: Wait for the stack
+        run: |
+          for i in $(seq 1 60); do curl -sf localhost:3000/api/health && exit 0; sleep 2; done
+          docker compose logs; exit 1
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - if: failure()
+        run: docker compose logs

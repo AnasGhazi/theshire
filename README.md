@@ -2,7 +2,7 @@
 
 An interactive coding-course platform: Markdown lessons with runnable Python/JavaScript cells, executed in locked-down Docker containers. See [PLAN.md](PLAN.md) for the full design and milestones, and [docs/security.md](docs/security.md) for the sandbox threat model and test results.
 
-> Work in progress. Done: **M0 (scaffold)**, **M1 (sandbox runner)**, **M2 (content + read API)**, **M3 (exercises, progress, rate limits)**.
+> Work in progress. Done: **M0 (scaffold)**, **M1 (sandbox runner)**, **M2 (content + read API)**, **M3 (exercises, progress, rate limits)**, **M4 (Codédex-style UI)**.
 
 ## Requirements
 
@@ -47,7 +47,8 @@ curl -s localhost:4000/api/run -H 'content-type: application/json' \
 ```
 apps/api           Fastify service (see API below)
 apps/api/src/sandbox  Docker runner, concurrency limiter, orphan cleanup
-apps/web           Next.js frontend (placeholder until M4)
+apps/web           Next.js frontend; all API calls go through apps/web/lib/api.ts
+e2e                Playwright smoke test (npm run test:e2e against a running stack)
 packages/shared    Zod schemas + types shared by api and web
 runner/images      Sandbox images for Python 3.12 and Node 24
 docs/security.md   Sandbox threat model and test evidence

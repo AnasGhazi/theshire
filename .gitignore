@@ -11,3 +11,5 @@ next-env.d.ts
 !.env.example
 .DS_Store
 data/
+test-results/
+playwright-report/

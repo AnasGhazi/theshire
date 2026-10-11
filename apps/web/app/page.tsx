@@ -1,30 +1,39 @@
-import { HealthResponse } from '@theshire/shared';
+import { CourseCard } from '@/components/CourseCard';
+import { DoorIcon } from '@/components/PixelArt';
+import { TopBar } from '@/components/TopBar';
+import { api } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
-async function getHealth(): Promise<HealthResponse | null> {
-  try {
-    const res = await fetch(`${process.env.API_URL ?? 'http://localhost:4000'}/api/health`, {
-      cache: 'no-store',
-    });
-    return HealthResponse.parse(await res.json());
-  } catch {
-    return null;
-  }
-}
-
-// Placeholder until M4 builds the real course UI.
-export default async function Home() {
-  const health = await getHealth();
+export default async function CatalogPage() {
+  const summaries = await api.courses();
+  const courses = await Promise.all(summaries.map((c) => api.course(c.slug)));
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-24">
-      <h1 className="font-pixel text-4xl">The Shire</h1>
-      <p className="text-shire-muted">Interactive coding lessons. Course catalog coming soon.</p>
-      <div className="rounded-lg bg-shire-panel p-4 font-mono text-sm">
-        <p>API: {health ? 'online' : 'unreachable'}</p>
-        <p>Sandbox (Docker): {health?.docker.available ? 'available' : 'unavailable'}</p>
-      </div>
-    </main>
+    <>
+      <TopBar />
+      <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+        <section className="flex flex-col items-start gap-6 py-14 sm:py-20 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-2xl">
+            <p className="font-pixel text-sm text-lime">Start your coding adventure</p>
+            <h1 className="mt-4 font-pixel text-4xl leading-[1.15] sm:text-5xl">
+              Learn to code. <span className="text-yellow">Second breakfast optional.</span>
+            </h1>
+            <p className="mt-5 text-xl text-muted">
+              Short lessons, real code. Every example runs in your browser, and every exercise is
+              checked the moment you submit.
+            </p>
+          </div>
+          <DoorIcon className="h-36 w-44 shrink-0 max-md:hidden" />
+        </section>
+
+        <h2 className="mb-6 font-pixel text-lg text-muted">Courses</h2>
+        <div className="grid gap-6 sm:grid-cols-2">
+          {courses.map((course) => (
+            <CourseCard key={course.slug} course={course} />
+          ))}
+        </div>
+      </main>
+    </>
   );
 }
