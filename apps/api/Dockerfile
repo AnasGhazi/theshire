@@ -22,6 +22,8 @@ COPY --from=build /repo/packages/shared/package.json packages/shared/
 COPY --from=build /repo/apps/web/package.json apps/web/
 RUN npm ci --omit=dev --workspace @theshire/api && npm cache clean --force
 COPY --from=build /repo/apps/api/dist apps/api/dist
+COPY content content
+ENV COURSES_DIR=/app/content/courses
 COPY --chmod=0555 apps/api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 EXPOSE 4000
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]

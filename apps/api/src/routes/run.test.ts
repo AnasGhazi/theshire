@@ -3,6 +3,7 @@ import { ErrorResponse, MAX_CODE_LENGTH, RunResult } from '@theshire/shared';
 import { buildApp, type App } from '../app';
 import { AppError } from '../errors';
 import type { Runner } from '../sandbox/types';
+import { ContentIndex } from '../content/load-content';
 
 const okResult: RunResult = {
   stdout: 'hi\n',
@@ -21,7 +22,11 @@ afterEach(async () => {
 });
 
 async function appWith(runner: Runner) {
-  app = await buildApp({ probeDocker: async () => ({ available: true }), runner });
+  app = await buildApp({
+    probeDocker: async () => ({ available: true }),
+    runner,
+    content: new ContentIndex([]),
+  });
   return app;
 }
 

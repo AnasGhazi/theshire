@@ -2,7 +2,7 @@
 
 An interactive coding-course platform: Markdown lessons with runnable Python/JavaScript cells, executed in locked-down Docker containers. See [PLAN.md](PLAN.md) for the full design and milestones, and [docs/security.md](docs/security.md) for the sandbox threat model and test results.
 
-> Work in progress. Done: **M0 (scaffold)**, **M1 (sandbox runner)**.
+> Work in progress. Done: **M0 (scaffold)**, **M1 (sandbox runner)**, **M2 (content + read API)**.
 
 ## Requirements
 

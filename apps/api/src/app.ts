@@ -6,7 +6,9 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import type { DockerStatus, ErrorResponse } from '@theshire/shared';
+import type { ContentIndex } from './content/load-content';
 import { AppError } from './errors';
+import { contentRoutes } from './routes/content';
 import { healthRoutes } from './routes/health';
 import { runRoutes } from './routes/run';
 import type { Runner } from './sandbox/types';
@@ -14,6 +16,7 @@ import type { Runner } from './sandbox/types';
 export interface AppDeps {
   probeDocker: () => Promise<DockerStatus>;
   runner: Runner;
+  content: ContentIndex;
 }
 
 export interface BuildAppOptions extends AppDeps {
@@ -51,6 +54,7 @@ export async function buildApp({ logger = false, ...deps }: BuildAppOptions) {
 
   await app.register(healthRoutes, { prefix: '/api', probeDocker: deps.probeDocker });
   await app.register(runRoutes, { prefix: '/api', runner: deps.runner });
+  await app.register(contentRoutes, { prefix: '/api', content: deps.content });
 
   return app;
 }

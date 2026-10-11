@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
 import type { SandboxOptions } from './sandbox/types';
 
@@ -6,6 +8,8 @@ const Env = z.object({
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  /** Folder holding one sub-folder per course. Defaults to the nearest content/courses upwards. */
+  COURSES_DIR: z.string().optional(),
 
   SANDBOX_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(5000),
   SANDBOX_MEMORY_MB: z.coerce.number().int().min(32).max(512).default(128),
@@ -29,6 +33,7 @@ export interface Config {
   host: string;
   port: number;
   logLevel: z.infer<typeof Env>['LOG_LEVEL'];
+  coursesDir: string;
   sandbox: SandboxOptions & {
     maxConcurrent: number;
     maxQueue: number;
@@ -46,6 +51,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     host: e.HOST,
     port: e.PORT,
     logLevel: e.LOG_LEVEL,
+    coursesDir: e.COURSES_DIR ? resolve(e.COURSES_DIR) : findCoursesDir(),
     sandbox: {
       limits: {
         timeoutMs: e.SANDBOX_TIMEOUT_MS,
@@ -61,4 +67,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       cleanupIntervalMs: e.SANDBOX_CLEANUP_INTERVAL_MS,
     },
   };
+}
+
+function findCoursesDir(from = process.cwd()): string {
+  for (let dir = resolve(from); ; dir = dirname(dir)) {
+    const candidate = join(dir, 'content', 'courses');
+    if (existsSync(candidate)) return candidate;
+    if (dirname(dir) === dir) {
+      throw new Error(`No content/courses folder found above ${from}; set COURSES_DIR.`);
+    }
+  }
 }

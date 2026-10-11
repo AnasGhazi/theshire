@@ -17,6 +17,7 @@ import { buildApp } from '../app';
 import { loadConfig } from '../config';
 import { DockerRunner } from './docker-runner';
 import { SANDBOX_LABEL } from './docker-args';
+import { ContentIndex } from '../content/load-content';
 
 const execFileAsync = promisify(execFile);
 const { sandbox } = loadConfig({});
@@ -87,6 +88,7 @@ describe('normal code', () => {
     const app = await buildApp({
       probeDocker: async () => ({ available: true }),
       runner,
+      content: new ContentIndex([]),
     });
     try {
       const res = await app.inject({

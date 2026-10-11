@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ErrorResponse, HealthResponse } from '@theshire/shared';
 import { buildApp, type App } from './app';
 import type { Runner } from './sandbox/types';
+import { ContentIndex } from './content/load-content';
 
 const noRunner: Runner = {
   run: () => Promise.reject(new Error('runner not expected in this test')),
@@ -19,6 +20,7 @@ describe('GET /api/health', () => {
     app = await buildApp({
       probeDocker: async () => ({ available: true, version: '27.0.0' }),
       runner: noRunner,
+      content: new ContentIndex([]),
     });
     const res = await app.inject({ method: 'GET', url: '/api/health' });
 
@@ -28,7 +30,11 @@ describe('GET /api/health', () => {
   });
 
   it('still returns 200 (liveness) when docker is unavailable', async () => {
-    app = await buildApp({ probeDocker: async () => ({ available: false }), runner: noRunner });
+    app = await buildApp({
+      probeDocker: async () => ({ available: false }),
+      runner: noRunner,
+      content: new ContentIndex([]),
+    });
     const res = await app.inject({ method: 'GET', url: '/api/health' });
 
     expect(res.statusCode).toBe(200);
@@ -38,7 +44,11 @@ describe('GET /api/health', () => {
 
 describe('error handling', () => {
   it('returns the standard error shape for unknown routes', async () => {
-    app = await buildApp({ probeDocker: async () => ({ available: false }), runner: noRunner });
+    app = await buildApp({
+      probeDocker: async () => ({ available: false }),
+      runner: noRunner,
+      content: new ContentIndex([]),
+    });
     const res = await app.inject({ method: 'GET', url: '/api/nope' });
 
     expect(res.statusCode).toBe(404);
@@ -51,6 +61,7 @@ describe('error handling', () => {
         throw new Error('secret internals');
       },
       runner: noRunner,
+      content: new ContentIndex([]),
     });
     const res = await app.inject({ method: 'GET', url: '/api/health' });
 
