@@ -2,7 +2,7 @@
 
 An interactive coding-course platform: Markdown lessons with runnable Python/JavaScript cells, executed in locked-down Docker containers. See [PLAN.md](PLAN.md) for the full design and milestones, and [docs/security.md](docs/security.md) for the sandbox threat model and test results.
 
-> Work in progress. Done: **M0 (scaffold)**, **M1 (sandbox runner)**, **M2 (content + read API)**.
+> Work in progress. Done: **M0 (scaffold)**, **M1 (sandbox runner)**, **M2 (content + read API)**, **M3 (exercises, progress, rate limits)**.
 
 ## Requirements
 
@@ -45,13 +45,28 @@ curl -s localhost:4000/api/run -H 'content-type: application/json' \
 ## Layout
 
 ```
-apps/api           Fastify service: /api/health, /api/run
+apps/api           Fastify service (see API below)
 apps/api/src/sandbox  Docker runner, concurrency limiter, orphan cleanup
 apps/web           Next.js frontend (placeholder until M4)
 packages/shared    Zod schemas + types shared by api and web
 runner/images      Sandbox images for Python 3.12 and Node 24
 docs/security.md   Sandbox threat model and test evidence
 ```
+
+## API
+
+| Method | Path                        | Purpose                                          |
+| ------ | --------------------------- | ------------------------------------------------ |
+| GET    | `/api/health`               | Liveness + Docker availability                   |
+| GET    | `/api/courses`              | Course catalog                                   |
+| GET    | `/api/courses/:slug`        | Course with ordered lessons                      |
+| GET    | `/api/lessons/:id`          | Lesson as structured blocks                      |
+| POST   | `/api/run`                  | Run code in the sandbox                          |
+| POST   | `/api/exercises/:id/submit` | Grade code against the exercise's tests          |
+| GET    | `/api/progress`             | The learner's completed lessons and exercises    |
+| PUT    | `/api/progress/:lessonId`   | Mark a lesson complete (its exercises must pass) |
+
+Learners are anonymous: the API issues a signed, HTTP-only cookie on first visit. Schemas live in `packages/shared`.
 
 ## Configuration
 

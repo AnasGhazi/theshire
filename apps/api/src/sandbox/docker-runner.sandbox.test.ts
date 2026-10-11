@@ -16,8 +16,8 @@ import { RunResult, type Language } from '@theshire/shared';
 import { buildApp } from '../app';
 import { loadConfig } from '../config';
 import { DockerRunner } from './docker-runner';
+import { testApp } from '../test-utils';
 import { SANDBOX_LABEL } from './docker-args';
-import { ContentIndex } from '../content/load-content';
 
 const execFileAsync = promisify(execFile);
 const { sandbox } = loadConfig({});
@@ -85,11 +85,7 @@ describe('normal code', () => {
   });
 
   it('serves POST /api/run end to end', async () => {
-    const app = await buildApp({
-      probeDocker: async () => ({ available: true }),
-      runner,
-      content: new ContentIndex([]),
-    });
+    const app = await buildApp(testApp({ runner }));
     try {
       const res = await app.inject({
         method: 'POST',

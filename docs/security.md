@@ -21,6 +21,7 @@ The Shire runs untrusted Python and JavaScript submitted by anonymous learners. 
 | Escalate privileges                               | Non-root user (uid 10001), `--cap-drop ALL` (effective capabilities are zero), `--security-opt no-new-privileges`, Docker's default seccomp profile |
 | Read host files or secrets                        | No bind mounts and no environment passed in; the Docker socket is not mounted into sandboxes                                                        |
 | Break out via shell injection in the launcher     | Code goes over stdin into a fixed launcher script; it never appears in a command line or shell string                                               |
+| Spam runs from one learner or IP                  | Fixed-window rate limits per learner (cookie) and per IP on run and submit; `429 RATE_LIMITED` with `Retry-After`                                   |
 | Inherit host Docker client settings               | The API's Docker CLI uses a private, empty config, so `~/.docker/config.json` proxies cannot inject env vars into sandboxes                         |
 | Leave containers running after an API crash       | Every container carries `theshire.sandbox` and `theshire.expires` labels; a cleanup job removes expired ones on startup and every 60 s              |
 | Download packages at runtime                      | No network, and `pip`/`npm`/`npx`/`corepack` are removed from the runner images                                                                     |
@@ -94,4 +95,10 @@ Deployment plan (M6):
 - **Timeout includes container start.** The 5 s wall clock starts when the container starts, so roughly 50–100 ms of interpreter start-up counts against the learner.
 - **stdin.** Programs see an empty stdin; `input()` raises `EOFError`. Interactive programs aren't supported in v1.
 - **Truncation granularity.** Output is cut at a byte boundary, which can split a multi-byte UTF-8 character (shown as `�`).
-- **Rate limiting per learner/IP** arrives in M3. Until then only the global concurrency and queue caps apply.
+- **Rate limits are per process.** `/api/run` and `/api/exercises/*/submit` allow 30 requests per learner and 120 per IP per minute (configurable). Counters live in memory, so they reset on restart and aren't shared between API instances. A learner can shed their cookie to get a new identity; the per-IP limit still applies. Behind a proxy, set `TRUST_PROXY` to the hop count so the real client IP is used, and don't expose the API port directly when `TRUST_PROXY` is on (clients could spoof `X-Forwarded-For`).
+
+## Grading integrity
+
+- Each test runs the learner's code plus that test's call in its **own** fresh container, so tests can't interfere with each other and the program has no grader code to tamper with.
+- Hidden tests return only a status (`passed`, `wrong_output`, `error`, `timeout`, ...). Their call, expected output, and the program's output never leave the server. Reference solutions are never sent to clients.
+- The sandbox suite runs every reference solution (must pass) and every starter template (must fail) against the real sandbox, so broken course content is caught in CI.

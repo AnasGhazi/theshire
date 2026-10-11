@@ -21,12 +21,18 @@ services:
     environment:
       PORT: 4000
       LOG_LEVEL: info
+      # Local development values. Production must set its own long random COOKIE_SECRET.
+      COOKIE_SECRET: ${COOKIE_SECRET:-local-compose-cookie-secret-not-for-production}
+      COOKIE_SECURE: 'false'
+      # Requests arrive through the web container's /api proxy; use its X-Forwarded-For.
+      TRUST_PROXY: '1'
     ports:
       - '4000:4000'
     # Lets the API start sibling sandbox containers on the host daemon. This is root-equivalent
     # access to the host: never expose this setup publicly as-is (see docs/security.md).
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - api-data:/app/data
     depends_on:
       runner-python:
         condition: service_completed_successfully
@@ -45,3 +51,6 @@ services:
       - '3000:3000'
     depends_on:
       - api
+
+volumes:
+  api-data:

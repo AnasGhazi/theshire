@@ -8,8 +8,13 @@ import {
 import type { DockerStatus, ErrorResponse } from '@theshire/shared';
 import type { ContentIndex } from './content/load-content';
 import { AppError } from './errors';
+import { registerAnonymousIdentity } from './identity';
+import type { ProgressRepository } from './progress/repository';
+import { createRateLimitHook, type RateLimitSettings } from './rate-limit';
 import { contentRoutes } from './routes/content';
+import { exerciseRoutes } from './routes/exercises';
 import { healthRoutes } from './routes/health';
+import { progressRoutes } from './routes/progress';
 import { runRoutes } from './routes/run';
 import type { Runner } from './sandbox/types';
 
@@ -17,16 +22,39 @@ export interface AppDeps {
   probeDocker: () => Promise<DockerStatus>;
   runner: Runner;
   content: ContentIndex;
+  progress: ProgressRepository;
 }
 
-export interface BuildAppOptions extends AppDeps {
+export interface AppSettings {
+  cookieSecret: string;
+  secureCookies: boolean;
+  /** Trust X-Forwarded-For from this many proxy hops (or all, if true) for client IPs. */
+  trustProxy: boolean | number;
+  rateLimit: RateLimitSettings;
+}
+
+export interface BuildAppOptions {
+  deps: AppDeps;
+  settings: AppSettings;
   logger?: FastifyServerOptions['logger'];
 }
 
 const errorBody = (code: string, message: string): ErrorResponse => ({ error: { code, message } });
 
-export async function buildApp({ logger = false, ...deps }: BuildAppOptions) {
-  const app = Fastify({ logger }).withTypeProvider<ZodTypeProvider>();
+export async function buildApp({ deps, settings, logger = false }: BuildAppOptions) {
+  const { trustProxy } = settings;
+  const options: FastifyServerOptions = {
+    logger,
+    // A hop count means "trust the nearest N proxies".
+    trustProxy:
+      typeof trustProxy === 'number'
+        ? (_address: string, hop: number) => hop < trustProxy
+        : trustProxy,
+  };
+  const base = Fastify(options);
+  await registerAnonymousIdentity(base, settings);
+
+  const app = base.withTypeProvider<ZodTypeProvider>();
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
@@ -52,9 +80,14 @@ export async function buildApp({ logger = false, ...deps }: BuildAppOptions) {
       .send(errorBody('NOT_FOUND', `Route ${request.method} ${request.url} not found`)),
   );
 
-  await app.register(healthRoutes, { prefix: '/api', probeDocker: deps.probeDocker });
-  await app.register(runRoutes, { prefix: '/api', runner: deps.runner });
-  await app.register(contentRoutes, { prefix: '/api', content: deps.content });
+  const rateLimit = createRateLimitHook(settings.rateLimit);
+
+  const prefix = '/api';
+  await app.register(healthRoutes, { prefix, probeDocker: deps.probeDocker });
+  await app.register(runRoutes, { prefix, runner: deps.runner, rateLimit });
+  await app.register(contentRoutes, { prefix, content: deps.content });
+  await app.register(exerciseRoutes, { prefix, ...deps, rateLimit });
+  await app.register(progressRoutes, { prefix, ...deps });
 
   return app;
 }

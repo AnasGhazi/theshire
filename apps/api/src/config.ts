@@ -1,15 +1,38 @@
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
+import type { AppSettings } from './app';
 import type { SandboxOptions } from './sandbox/types';
 
 // Upper bounds keep a misconfigured environment from quietly loosening the sandbox.
+const DEV_COOKIE_SECRET = 'dev-only-cookie-secret-do-not-use-in-production';
+
 const Env = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   /** Folder holding one sub-folder per course. Defaults to the nearest content/courses upwards. */
   COURSES_DIR: z.string().optional(),
+  DATABASE_PATH: z.string().default('data/theshire.db'),
+  /** Signs the learner cookie. Required in production. */
+  COOKIE_SECRET: z.string().min(32).optional(),
+  /** Send the learner cookie only over HTTPS. Defaults to true in production. */
+  COOKIE_SECURE: z.enum(['true', 'false']).optional(),
+  /** `true`, `false`, or a hop count: whether to trust X-Forwarded-For for client IPs. */
+  TRUST_PROXY: z
+    .string()
+    .default('false')
+    .transform((v, ctx) => {
+      if (v === 'true' || v === 'false') return v === 'true';
+      const hops = Number(v);
+      if (Number.isInteger(hops) && hops >= 0) return hops;
+      ctx.addIssue({ code: 'custom', message: 'must be true, false, or a hop count' });
+      return z.NEVER;
+    }),
+  RATE_LIMIT_PER_LEARNER: z.coerce.number().int().min(1).default(30),
+  RATE_LIMIT_PER_IP: z.coerce.number().int().min(1).default(120),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
 
   SANDBOX_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(5000),
   SANDBOX_MEMORY_MB: z.coerce.number().int().min(32).max(512).default(128),
@@ -34,6 +57,8 @@ export interface Config {
   port: number;
   logLevel: z.infer<typeof Env>['LOG_LEVEL'];
   coursesDir: string;
+  databasePath: string;
+  app: AppSettings;
   sandbox: SandboxOptions & {
     maxConcurrent: number;
     maxQueue: number;
@@ -47,11 +72,26 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error(`Invalid environment configuration:\n${z.prettifyError(result.error)}`);
   }
   const e = result.data;
+  const production = e.NODE_ENV === 'production';
+  if (production && !e.COOKIE_SECRET) {
+    throw new Error('Invalid environment configuration: COOKIE_SECRET is required in production');
+  }
   return {
     host: e.HOST,
     port: e.PORT,
     logLevel: e.LOG_LEVEL,
     coursesDir: e.COURSES_DIR ? resolve(e.COURSES_DIR) : findCoursesDir(),
+    databasePath: e.DATABASE_PATH,
+    app: {
+      cookieSecret: e.COOKIE_SECRET ?? DEV_COOKIE_SECRET,
+      secureCookies: e.COOKIE_SECURE ? e.COOKIE_SECURE === 'true' : production,
+      trustProxy: e.TRUST_PROXY,
+      rateLimit: {
+        perLearner: e.RATE_LIMIT_PER_LEARNER,
+        perIp: e.RATE_LIMIT_PER_IP,
+        windowMs: e.RATE_LIMIT_WINDOW_MS,
+      },
+    },
     sandbox: {
       limits: {
         timeoutMs: e.SANDBOX_TIMEOUT_MS,

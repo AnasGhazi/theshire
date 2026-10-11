@@ -3,14 +3,11 @@ import { CourseDetail, CourseList, ErrorResponse, Lesson } from '@theshire/share
 import { buildApp, type App } from '../app';
 import { loadConfig } from '../config';
 import { loadContent } from '../content/load-content';
+import { testApp } from '../test-utils';
 
 let app: App;
 beforeAll(async () => {
-  app = await buildApp({
-    probeDocker: async () => ({ available: true }),
-    runner: { run: () => Promise.reject(new Error('not used')) },
-    content: await loadContent(loadConfig({}).coursesDir),
-  });
+  app = await buildApp(testApp({ content: await loadContent(loadConfig({}).coursesDir) }));
 });
 afterAll(() => app.close());
 

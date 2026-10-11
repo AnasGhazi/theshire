@@ -1,14 +1,15 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErrorResponse, RunRequest, RunResult } from '@theshire/shared';
 import type { AppDeps } from '../app';
+import type { RouteHook } from './types';
 
-export const runRoutes: FastifyPluginAsyncZod<Pick<AppDeps, 'runner'>> = async (
-  app,
-  { runner },
-) => {
+export const runRoutes: FastifyPluginAsyncZod<
+  Pick<AppDeps, 'runner'> & { rateLimit: RouteHook }
+> = async (app, { runner, rateLimit }) => {
   app.post(
     '/run',
     {
+      preHandler: rateLimit,
       schema: {
         body: RunRequest,
         response: { 200: RunResult, 429: ErrorResponse, 503: ErrorResponse },
