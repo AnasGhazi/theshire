@@ -86,7 +86,7 @@ Deployment plan (M6):
 - Managed platforms (Render, Vercel, Fly Machines without nested virtualization) generally can't run Docker-in-Docker, which is why a VPS is used.
 - Only ports 80/443 open publicly, behind a reverse proxy with TLS; the Docker daemon is never exposed over TCP.
 - The frontend is hosted separately and talks only to `/api/*`.
-- Re-run `npm run test:sandbox` on the VPS after deploying and record the results here.
+- Re-run the hostile cases against the live deployment and record the results here (done: see [Deployed results](#deployed-results)).
 
 ## Known limitations
 
@@ -114,3 +114,21 @@ Deployment plan (M6):
 - **Identities don't bleed between people.** On sign-in the browser's anonymous progress is merged into the account (attempts add up, earliest timestamps win) and the anonymous cookie is replaced; on sign-out the browser gets a fresh anonymous learner that can't see the account's progress.
 
 These behaviors are covered by tests against a stand-in Google that signs tokens with a local key, including forged signatures, wrong audience or issuer, expired tokens, replayed nonces, cancelled consent, and missing flow cookies.
+
+## Deployed results
+
+Re-run on 2026-10-11 against the live deployment (AWS EC2 t4g.micro, Ubuntu 24.04 arm64, Docker 29.9) with `npm run check:deployment -- https://dashire.duckdns.org`, through the public HTTPS API:
+
+| Case                        | Result                                         | Time (incl. network) |
+| --------------------------- | ---------------------------------------------- | -------------------- |
+| Normal Python / JavaScript  | correct output, exit 0                         | ~1.0 to 1.2 s        |
+| Infinite loop               | killed, `timedOut`                             | 5.5 s                |
+| Fork bomb                   | contained, killed at the time limit            | 6.0 s                |
+| Memory hog                  | exit 137, `oomKilled`                          | 1.2 s                |
+| Outbound network            | blocked                                        | 0.8 s                |
+| Write to `/etc`             | `Read-only file system`                        | 0.6 s                |
+| Huge output                 | killed, `truncated`                            | 0.7 s                |
+| Environment / socket / user | no server secrets, no Docker socket, uid 10001 | 0.6 s                |
+| Server health afterwards    | healthy, no leftover containers                |                      |
+
+From outside, only ports 80 and 443 answer (SSH is restricted to the owner's IP); the web (3000) and API (4000) ports are not reachable. The browser smoke test also passes against the live site.

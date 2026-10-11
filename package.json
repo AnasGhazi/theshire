@@ -23,7 +23,8 @@
     "test:sandbox": "vitest run --config apps/api/vitest.sandbox.config.ts",
     "sandbox:report": "tsx apps/api/scripts/sandbox-report.ts",
     "test:e2e": "playwright test",
-    "docs:api": "tsx apps/api/scripts/generate-api-docs.ts"
+    "docs:api": "tsx apps/api/scripts/generate-api-docs.ts",
+    "check:deployment": "tsx apps/api/scripts/check-deployment.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

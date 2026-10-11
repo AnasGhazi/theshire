@@ -196,7 +196,7 @@ Each milestone has acceptance criteria. Don't move on until they pass.
 - `docs/api.md` matches the Zod schemas.
 - **Done when:** a fresh clone can be running with `docker compose up` following only the README.
 
-### M6 — Deploy (optional but strongly recommended for the resume)
+### M6 — Deploy (optional but strongly recommended for the resume) ✅ live at https://dashire.duckdns.org
 
 - Deploy API + runner to a small VPS (or equivalent) and the frontend to any static/Node host.
 - Live demo URL in the README, with a note on limits (rate limits, no accounts).

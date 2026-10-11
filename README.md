@@ -1,5 +1,7 @@
 # The Shire
 
+**Live demo: https://dashire.duckdns.org**
+
 An interactive coding-course platform in the spirit of Codédex: bite-sized Markdown lessons with runnable Python and JavaScript, auto-graded exercises, and per-learner progress. Every line of learner code runs in a fresh, locked-down Docker container.
 
 ![Lesson view: instructions on the left, editor and terminal on the right, all tests passing](docs/images/lesson.png)
@@ -198,6 +200,12 @@ Each test runs the learner's code followed by `call` and compares stdout with `e
 - **Accounts are Google-only.** Without Google sign-in configured (or for visitors who don't sign in), progress lives in a browser cookie.
 - **No stdin.** Programs that call `input()` get end-of-file.
 - **Output-based grading.** Exercises must print deterministic text; lenient matching forgives formatting, not different values.
+
+## Deployment
+
+The live demo runs on AWS EC2 (a t4g.micro) behind Caddy for automatic HTTPS, built to cost nothing beyond AWS free credits: fixed size, no auto-scaling or pay-per-request services, no long-lived keys. Details and the one-command update script: [docs/deploy.md](docs/deploy.md). The hostile-input checks were re-run against the live server: [results](docs/security.md#deployed-results).
+
+Limits on the demo: 2 code runs at a time (others queue), rate limits per learner and per IP, and it's a single small server.
 
 ## Project plan
 
