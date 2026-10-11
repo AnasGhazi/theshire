@@ -41,10 +41,12 @@ export function preloadMusic(onProgress: (fraction: number) => void = () => {}):
         received += value.length;
         if (total) onProgress(Math.min(1, received / total));
       }
+      // Switch to the in-memory copy only if playback hasn't started (switching mid-song would
+      // restart it).
       const el = music();
-      const time = el.currentTime;
-      el.src = URL.createObjectURL(new Blob(chunks as BlobPart[], { type: 'audio/mpeg' }));
-      el.currentTime = time;
+      if (el.paused && el.currentTime === 0) {
+        el.src = URL.createObjectURL(new Blob(chunks as BlobPart[], { type: 'audio/mpeg' }));
+      }
     } catch {
       // Fall back to streaming.
     }

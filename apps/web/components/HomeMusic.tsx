@@ -2,13 +2,13 @@
 
 import { Music, Music2 } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { music, musicSetting } from '@/lib/music';
+import { music, musicSetting, preloadMusic } from '@/lib/music';
 import { soundSettings } from '@/lib/sound';
 
 /**
- * Plays the Shire theme while the home page is open. The loading screen's "Enter" press gives the
- * browser the user gesture it needs; if the page was reached another way and autoplay is still
- * blocked, playback starts on the first click or key press. The global sound toggle silences it.
+ * Plays the Shire theme while the home page is open (on by default). Where the browser allows
+ * autoplay it starts right away; otherwise on the first click, tap, or key press anywhere. The
+ * global sound toggle silences it.
  */
 export function HomeMusic() {
   const enabled = useSyncExternalStore(musicSetting.subscribe, musicSetting.get, () => true);
@@ -34,13 +34,22 @@ export function HomeMusic() {
       el.pause();
       return;
     }
-    const start = () => void el.play().catch(() => {});
-    const events = ['pointerdown', 'keydown'] as const;
-    el.play().catch(() => {
-      events.forEach((ev) => window.addEventListener(ev, start, { once: true }));
+    let active = true;
+    // Any of these count as a user gesture that unlocks audio.
+    const events = ['pointerdown', 'keydown', 'touchend'] as const;
+    const unlock = () => {
+      events.forEach((ev) => window.removeEventListener(ev, unlock, true));
+      if (active) void el.play().catch(() => {});
+    };
+    // Wait for the track to be fully downloaded (instant after the loading screen), then try to
+    // play. If the browser blocks autoplay, start on the first interaction anywhere.
+    void preloadMusic().then(() => {
+      if (!active) return;
+      el.play().catch(() => events.forEach((ev) => window.addEventListener(ev, unlock, true)));
     });
     return () => {
-      events.forEach((ev) => window.removeEventListener(ev, start));
+      active = false;
+      events.forEach((ev) => window.removeEventListener(ev, unlock, true));
       el.pause(); // leaving the home page; the track resumes from here next time
     };
   }, [shouldPlay]);
@@ -60,7 +69,7 @@ export function HomeMusic() {
           ? 'Music on'
           : muted
             ? 'Music (sound off)'
-            : 'Music: click anywhere'
+            : 'Music: tap anywhere'
         : 'Music off'}
     </button>
   );
