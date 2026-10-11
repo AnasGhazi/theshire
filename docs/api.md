@@ -252,6 +252,7 @@ Grade code against the exercise's tests, each in its own sandbox. Records the at
     hidden: false;
     status: "passed" | "wrong_output" | "error" | "timeout" | "memory_limit" | "output_limit";
     passed: boolean;
+    exact: boolean;
     call: string;
     expect: string;
     stdout: string;

@@ -81,6 +81,7 @@ flowchart LR
 - **Anonymous identity behind one seam.** A signed, HTTP-only cookie sets `request.learnerId`. Route handlers never read cookies, so real auth can replace it.
 - **Schemas are the contract.** Shared Zod schemas validate both sides, and [docs/api.md](docs/api.md) is generated from the schemas registered on the routes; a test fails if it drifts.
 - **Limits can't be loosened by accident.** Sandbox settings come from validated env vars with hard caps, and unit tests pin every Docker flag.
+- **Forgiving grading, with feedback.** `hello, Shire!` passes a test expecting `Hello, Shire!`, with a note showing the exact form. Different words, numbers, or line structure still fail.
 - **Logs are useful and safe.** Structured JSON with a request id (`X-Request-Id`, echoed in responses); runs log language, size, duration, and outcome, never the code.
 
 ## Testing
@@ -175,7 +176,7 @@ def sum_to(n):
 ```
 ````
 
-Each test runs the learner's code followed by `call`, and passes when stdout matches `expect` (ignoring trailing whitespace). Any mistake in a lesson stops the API at startup with the file and line.
+Each test runs the learner's code followed by `call` and compares stdout with `expect`. Matching is forgiving by default: differences in capitalization, spacing, and everyday punctuation still pass (the learner sees a gentle note with the exact output), but the same words, numbers, and lines must be there. Add `strict: true` to a test that needs exact output. Any mistake in a lesson stops the API at startup with the file and line.
 
 ## Known limitations
 
@@ -184,7 +185,7 @@ Each test runs the learner's code followed by `call`, and passes when stdout mat
 - **Single instance.** Rate limits and the concurrency limiter live in memory, and SQLite is local. Scaling out needs shared counters and Postgres; the repository interface is ready for it.
 - **No accounts.** Progress is tied to a browser cookie; clearing cookies starts over.
 - **No stdin.** Programs that call `input()` get end-of-file.
-- **Exact output matching.** Exercises must print deterministic text.
+- **Output-based grading.** Exercises must print deterministic text; lenient matching forgives formatting, not different values.
 
 ## Project plan
 

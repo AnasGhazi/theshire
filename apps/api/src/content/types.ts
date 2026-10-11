@@ -7,6 +7,8 @@ export interface ExerciseTest {
   call: string;
   expect: string;
   hidden: boolean;
+  /** Require exact output. Otherwise case, spacing, and punctuation differences are forgiven. */
+  strict: boolean;
 }
 
 /** Server-side exercise: carries hidden test data and the reference solution. */

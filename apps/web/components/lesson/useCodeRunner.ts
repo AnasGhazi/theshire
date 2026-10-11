@@ -1,8 +1,14 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { api, ApiError, type Language } from '@/lib/api';
+import { api, ApiError, type Language, type RunResult } from '@/lib/api';
+import { sfx } from '@/lib/sound';
 import type { OutputState } from './TerminalOutput';
+
+/** Did the program finish cleanly on its own? */
+export function ranCleanly(r: RunResult): boolean {
+  return r.exitCode === 0 && !r.timedOut && !r.oomKilled && !r.truncated;
+}
 
 export function errorMessage(err: unknown): string {
   return err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
@@ -17,9 +23,12 @@ export function useCodeRunner(language: Language) {
     async (code: string) => {
       setOutput({ kind: 'running' });
       try {
-        setOutput({ kind: 'run', result: await api.run(language, code) });
+        const result = await api.run(language, code);
+        setOutput({ kind: 'run', result });
+        (ranCleanly(result) ? sfx.runDone : sfx.error)();
       } catch (err) {
         setOutput({ kind: 'error', message: errorMessage(err) });
+        sfx.error();
       }
     },
     [language],

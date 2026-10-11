@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { RunResult } from '@theshire/shared';
 import type { Exercise } from '../content/types';
 import type { Runner } from '../sandbox/types';
-import { buildTestProgram, gradeSubmission, normalizeOutput, statusOf } from './grade';
+import { buildTestProgram, gradeSubmission, judge, matchOutput, normalizeOutput } from './grade';
 
 const run = (overrides: Partial<RunResult> = {}): RunResult => ({
   stdout: '',
@@ -31,27 +31,62 @@ describe('buildTestProgram', () => {
         call: 'print(f())',
         expect: '1',
         hidden: false,
+        strict: false,
       }),
     ).toBe('def f():\n    return 1\n\nprint(f())\n');
   });
 
   it('grades the program itself when there is no call', () => {
     expect(
-      buildTestProgram('print("hi")', { id: 't1', call: '', expect: 'hi', hidden: false }),
+      buildTestProgram('print("hi")', {
+        id: 't1',
+        call: '',
+        expect: 'hi',
+        hidden: false,
+        strict: false,
+      }),
     ).toBe('print("hi")');
   });
 });
 
-describe('statusOf', () => {
+describe('matchOutput', () => {
   it.each([
-    [run({ stdout: '6\n' }), 'passed'],
-    [run({ stdout: '7\n' }), 'wrong_output'],
-    [run({ stdout: '6\n', exitCode: 1 }), 'error'],
-    [run({ exitCode: null, timedOut: true }), 'timeout'],
-    [run({ exitCode: 137, oomKilled: true }), 'memory_limit'],
-    [run({ exitCode: null, truncated: true, stdout: '6' }), 'output_limit'],
-  ] as const)('%o -> %s', (result, status) => {
-    expect(statusOf(result, '6')).toBe(status);
+    ['Hello, Shire!', 'Hello, Shire!\n', 'exact'],
+    ['Hello, Shire!', 'hello, Shire!', 'close'], // capitalization
+    ['Hello, Shire!', 'Hello Shire', 'close'], // punctuation
+    ['Hello, Shire!', '  Hello,   Shire !', 'close'], // spacing
+    ['[2,4]', '[2, 4]', 'close'],
+    ['{"the":2}', "{'the': 2}", 'close'], // Python dict vs JSON quoting
+    ['1\n2\n3', '1\n2\n3\n\n', 'exact'],
+    ['Hello, Shire!', 'Hello, World!', 'none'], // different words
+    ['55', '56', 'none'], // different numbers
+    ['-2', '2', 'none'], // signs matter
+    ['[]', '', 'none'],
+    ['1\n2\n3', '123', 'none'], // line structure matters
+    ['1\n2', '1\n2\n3', 'none'],
+    ['', 'anything', 'none'],
+  ] as const)('expected %j, got %j -> %s', (expected, actual, match) => {
+    expect(matchOutput(actual, expected)).toBe(match);
+  });
+
+  it('accepts only exact output for strict tests', () => {
+    expect(matchOutput('hello, Shire!', 'Hello, Shire!', true)).toBe('none');
+    expect(matchOutput('Hello, Shire!', 'Hello, Shire!', true)).toBe('exact');
+  });
+});
+
+describe('judge', () => {
+  const test = { expect: '6', strict: false };
+  it.each([
+    [run({ stdout: '6\n' }), 'passed', true],
+    [run({ stdout: '6.' }), 'passed', false],
+    [run({ stdout: '7\n' }), 'wrong_output', false],
+    [run({ stdout: '6\n', exitCode: 1 }), 'error', false],
+    [run({ exitCode: null, timedOut: true }), 'timeout', false],
+    [run({ exitCode: 137, oomKilled: true }), 'memory_limit', false],
+    [run({ exitCode: null, truncated: true, stdout: '6' }), 'output_limit', false],
+  ] as const)('%o -> %s', (result, status, exact) => {
+    expect(judge(result, test)).toEqual({ status, exact });
   });
 });
 
@@ -64,8 +99,8 @@ describe('gradeSubmission', () => {
     hint: null,
     solution: null,
     tests: [
-      { id: 't1', call: 'print(f(1))', expect: '1', hidden: false },
-      { id: 't2', call: 'print(f(2))', expect: '2', hidden: true },
+      { id: 't1', call: 'print(f(1))', expect: '1', hidden: false, strict: false },
+      { id: 't2', call: 'print(f(2))', expect: '2', hidden: true, strict: false },
     ],
   };
 
@@ -92,6 +127,7 @@ describe('gradeSubmission', () => {
           hidden: false,
           status: 'passed',
           passed: true,
+          exact: true,
           call: 'print(f(1))',
           expect: '1',
           stdout: '1\n',

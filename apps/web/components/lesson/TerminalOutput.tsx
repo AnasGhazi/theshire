@@ -88,6 +88,12 @@ function TestRow({ test, index }: { test: TestResult; index: number }) {
               <span className="text-muted"> should print </span>
               <code className="text-[#c3e88d]">{test.expect}</code>
             </p>
+            {test.passed && !test.exact && (
+              <p className="mt-1 break-words text-sm text-warn">
+                Close enough! You printed <code>{test.stdout.trim()}</code>. Watch the
+                capitalization, spacing, and punctuation.
+              </p>
+            )}
             {!test.passed && (
               <p className="mt-1 break-words text-muted">
                 {test.status === 'wrong_output' ? (
@@ -121,7 +127,9 @@ function SubmitView({ result, onNext }: { result: SubmitResult; onNext?: () => v
         <div className="pop-in mb-4 rounded-lg border-3 border-[#b5f26a] bg-[#1d3a12] px-4 py-3">
           <p className="font-pixel text-lg text-[#c9f78f]">Exercise complete!</p>
           <p className="mt-1 text-[#d8f5bf]">
-            All {result.totalCount} tests passed.
+            {result.totalCount === 1
+              ? 'The test passed.'
+              : `All ${result.totalCount} tests passed.`}
             {result.lessonCompleted && ' Lesson complete!'}
           </p>
           {result.lessonCompleted && onNext && (

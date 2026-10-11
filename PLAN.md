@@ -87,6 +87,8 @@ def sum_to(n):
 ```
 ````
 
+Output matching is lenient by default (capitalization, spacing, and everyday punctuation are forgiven; words, numbers, and line structure must match). A test can set `strict: true` to require exact output.
+
 Parse lessons into a structured JSON shape the API returns: `blocks: [{type: "markdown" | "runnable" | "exercise", ...}]`. The frontend should never parse raw Markdown for code blocks itself.
 
 ## 5. API contract

@@ -17,12 +17,43 @@ export function buildTestProgram(code: string, test: ExerciseTest): string {
   return test.call ? `${code}\n\n${test.call}\n` : code;
 }
 
-export function statusOf(run: RunResult, expect: string): TestStatus {
-  if (run.timedOut) return 'timeout';
-  if (run.oomKilled) return 'memory_limit';
-  if (run.truncated) return 'output_limit';
-  if (run.exitCode !== 0) return 'error';
-  return normalizeOutput(run.stdout) === normalizeOutput(expect) ? 'passed' : 'wrong_output';
+/** Characters a lenient comparison ignores: whitespace and everyday punctuation. */
+const FORGIVEN = /[\s.,!?;:'"`]/g;
+
+/** Non-empty lines, lowercased, with whitespace and everyday punctuation removed. */
+function looseLines(text: string): string[] {
+  return normalizeOutput(text)
+    .split('\n')
+    .map((line) => line.toLowerCase().replace(FORGIVEN, ''))
+    .filter((line) => line.length > 0);
+}
+
+export type OutputMatch = 'exact' | 'close' | 'none';
+
+/**
+ * Compares program output with the expected output. An exact match ignores only trailing
+ * whitespace. A close match also forgives capitalization, spacing, and punctuation, but the same
+ * words, numbers, and line structure must be there. `strict` tests accept only exact matches.
+ */
+export function matchOutput(actual: string, expected: string, strict = false): OutputMatch {
+  if (normalizeOutput(actual) === normalizeOutput(expected)) return 'exact';
+  if (strict) return 'none';
+  const want = looseLines(expected);
+  if (want.length === 0) return 'none'; // nothing meaningful left to compare loosely
+  const got = looseLines(actual);
+  return got.length === want.length && got.every((line, i) => line === want[i]) ? 'close' : 'none';
+}
+
+export function judge(
+  run: RunResult,
+  test: Pick<ExerciseTest, 'expect' | 'strict'>,
+): { status: TestStatus; exact: boolean } {
+  if (run.timedOut) return { status: 'timeout', exact: false };
+  if (run.oomKilled) return { status: 'memory_limit', exact: false };
+  if (run.truncated) return { status: 'output_limit', exact: false };
+  if (run.exitCode !== 0) return { status: 'error', exact: false };
+  const match = matchOutput(run.stdout, test.expect, test.strict);
+  return { status: match === 'none' ? 'wrong_output' : 'passed', exact: match === 'exact' };
 }
 
 /**
@@ -40,7 +71,7 @@ export async function gradeSubmission(
         language: exercise.language,
         code: buildTestProgram(code, test),
       });
-      const status = statusOf(run, test.expect);
+      const { status, exact } = judge(run, test);
       const passed = status === 'passed';
       if (test.hidden) return { id: test.id, hidden: true, status, passed };
       return {
@@ -48,6 +79,7 @@ export async function gradeSubmission(
         hidden: false,
         status,
         passed,
+        exact,
         call: test.call,
         expect: test.expect,
         stdout: run.stdout,

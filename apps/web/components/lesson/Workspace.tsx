@@ -4,6 +4,7 @@ import { CircleCheck, Copy, Ellipsis, Play, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type ExerciseBlock, type Language } from '@/lib/api';
+import { sfx } from '@/lib/sound';
 import { LanguageBadge } from '../LanguageBadge';
 import { useProgress } from '../ProgressProvider';
 import { CodeEditor } from './CodeEditor';
@@ -114,9 +115,12 @@ export function Workspace({
     try {
       const result = await api.submit(tab.exercise.id, code);
       setOutput({ kind: 'submit', result });
+      if (!result.passed) sfx.error();
+      else (result.lessonCompleted ? sfx.lessonComplete : sfx.success)();
       if (result.passed) await refresh();
     } catch (err) {
       setOutput({ kind: 'error', message: errorMessage(err) });
+      sfx.error();
     }
   }, [tab.exercise, busy, code, setOutput, refresh]);
 

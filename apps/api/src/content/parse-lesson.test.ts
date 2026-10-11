@@ -11,7 +11,7 @@ const EXERCISE = [
   fence('python exercise', 'def f():\n    pass'),
   fence(
     'tests',
-    '- call: print(f())\n  expect: 1\n- call: print(f() + 1)\n  expect: "2"\n  hidden: true',
+    '- call: print(f())\n  expect: 1\n- call: print(f() + 1)\n  expect: "2"\n  hidden: true\n  strict: true',
   ),
   fence('hint', 'Return **1**.'),
   fence('python solution', 'def f():\n    return 1'),
@@ -65,8 +65,8 @@ describe('parseLesson', () => {
       hint: 'Return **1**.',
       solution: 'def f():\n    return 1',
       tests: [
-        { id: 't1', call: 'print(f())', expect: '1', hidden: false },
-        { id: 't2', call: 'print(f() + 1)', expect: '2', hidden: true },
+        { id: 't1', call: 'print(f())', expect: '1', hidden: false, strict: false },
+        { id: 't2', call: 'print(f() + 1)', expect: '2', hidden: true, strict: true },
       ],
     });
   });
@@ -82,6 +82,7 @@ describe('parseLesson', () => {
       call: '',
       expect: 'ok',
       hidden: false,
+      strict: false,
     });
   });
 

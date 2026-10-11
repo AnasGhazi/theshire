@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { SandboxStatus } from './SandboxStatus';
+import { SoundToggle } from './SoundEffects';
 
 export interface Crumb {
   label: string;
@@ -47,6 +48,7 @@ export function TopBar({
       <div className="max-lg:hidden">{children}</div>
       <div className="ml-auto flex items-center gap-5">
         <SandboxStatus />
+        <SoundToggle />
         <Link href="/" className="btn btn-yellow btn-sm max-sm:hidden">
           Courses
         </Link>

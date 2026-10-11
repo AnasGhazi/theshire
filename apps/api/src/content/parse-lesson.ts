@@ -21,6 +21,7 @@ const TestCases = z
       // YAML reads `expect: 6` as a number; outputs are always compared as text.
       expect: z.union([z.string(), z.number(), z.boolean()]).transform(String),
       hidden: z.boolean().default(false),
+      strict: z.boolean().default(false),
     }),
   )
   .min(1, 'needs at least one test')

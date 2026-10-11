@@ -4,6 +4,7 @@ import { CircleCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { sfx } from '@/lib/sound';
 import { useProgress } from '../ProgressProvider';
 import { errorMessage } from './useCodeRunner';
 
@@ -39,9 +40,13 @@ export function LessonFooter({
             type="button"
             className="btn btn-yellow"
             onClick={() =>
-              api
-                .completeLesson(lessonId)
-                .then(setProgress, (err: unknown) => setError(errorMessage(err)))
+              api.completeLesson(lessonId).then(
+                (p) => {
+                  setProgress(p);
+                  sfx.lessonComplete();
+                },
+                (err: unknown) => setError(errorMessage(err)),
+              )
             }
           >
             Mark as complete

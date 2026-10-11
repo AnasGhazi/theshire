@@ -25,6 +25,8 @@ export const TestResult = z.discriminatedUnion('hidden', [
     hidden: z.literal(false),
     status: TestStatus,
     passed: z.boolean(),
+    /** False when the output passed only after forgiving case, spacing, or punctuation. */
+    exact: z.boolean(),
     call: z.string(),
     expect: z.string(),
     stdout: z.string(),
