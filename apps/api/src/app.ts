@@ -1,4 +1,10 @@
-import Fastify, { type FastifyError, type FastifyServerOptions } from 'fastify';
+import { randomUUID } from 'node:crypto';
+import Fastify, {
+  LogController,
+  type FastifyError,
+  type FastifyServerOptions,
+  type RouteOptions,
+} from 'fastify';
 import {
   hasZodFastifySchemaValidationErrors,
   serializerCompiler,
@@ -37,14 +43,20 @@ export interface BuildAppOptions {
   deps: AppDeps;
   settings: AppSettings;
   logger?: FastifyServerOptions['logger'];
+  /** Observes every registered route (used to generate docs/api.md from the live schemas). */
+  onRoute?: (route: RouteOptions) => void;
 }
 
 const errorBody = (code: string, message: string): ErrorResponse => ({ error: { code, message } });
 
-export async function buildApp({ deps, settings, logger = false }: BuildAppOptions) {
+export async function buildApp({ deps, settings, logger = false, onRoute }: BuildAppOptions) {
   const { trustProxy } = settings;
   const options: FastifyServerOptions = {
     logger,
+    // Every log line carries a request id; callers can supply their own to trace across services.
+    requestIdHeader: 'x-request-id',
+    logController: new LogController({ requestIdLogLabel: 'requestId' }),
+    genReqId: () => randomUUID(),
     // A hop count means "trust the nearest N proxies".
     trustProxy:
       typeof trustProxy === 'number'
@@ -52,9 +64,13 @@ export async function buildApp({ deps, settings, logger = false }: BuildAppOptio
         : trustProxy,
   };
   const base = Fastify(options);
+  if (onRoute) base.addHook('onRoute', onRoute);
   await registerAnonymousIdentity(base, settings);
 
   const app = base.withTypeProvider<ZodTypeProvider>();
+  app.addHook('onSend', async (request, reply) => {
+    reply.header('x-request-id', request.id);
+  });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 

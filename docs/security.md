@@ -41,7 +41,7 @@ The flags are pinned by unit tests in [`docker-args.test.ts`](../apps/api/src/sa
 
 ## Test results
 
-Hostile-input tests live in [`docker-runner.sandbox.test.ts`](../apps/api/src/sandbox/docker-runner.sandbox.test.ts) and run with `npm run test:sandbox`, against real containers. They also assert after every test that no sandbox container is left behind. 23 tests, all passing.
+Hostile-input tests live in [`docker-runner.sandbox.test.ts`](../apps/api/src/sandbox/docker-runner.sandbox.test.ts) and run with `npm run test:sandbox`, against real containers. They also assert after every test that no sandbox container is left behind. 24 tests in that file, all passing; with the grading suite ([`submit.sandbox.test.ts`](../apps/api/src/exercises/submit.sandbox.test.ts)) the sandbox run is 26.
 
 Observed results (`npm run sandbox:report`, 2026-10-11, Colima VM on Apple Silicon, Docker Engine 29.5, Ubuntu 24.04 guest, cgroup v2):
 

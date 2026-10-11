@@ -358,3 +358,22 @@ describe('host docker client config', () => {
     expect(result.stdout).toBe('[]\n');
   });
 });
+
+describe('infrastructure failures', () => {
+  it('reports a missing runner image as 503 SANDBOX_UNAVAILABLE without leaking details', async () => {
+    const broken = new DockerRunner({
+      ...sandbox,
+      images: { ...sandbox.images, python: 'theshire/does-not-exist:latest' },
+    });
+    const error = await broken
+      .run({ language: 'python', code: 'print(1)' })
+      .catch((e: unknown) => e);
+    expect(error).toMatchObject({
+      statusCode: 503,
+      code: 'SANDBOX_UNAVAILABLE',
+      message: 'Code execution is unavailable.',
+    });
+    // The docker detail is kept for the server log only.
+    expect(String((error as Error).cause)).toContain('does-not-exist');
+  });
+});

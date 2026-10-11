@@ -11,6 +11,7 @@ export const runRoutes: FastifyPluginAsyncZod<
     {
       preHandler: rateLimit,
       schema: {
+        summary: 'Run code once in a fresh sandbox container. Rate limited per learner and per IP.',
         body: RunRequest,
         response: { 200: RunResult, 429: ErrorResponse, 503: ErrorResponse },
       },

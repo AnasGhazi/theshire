@@ -8,14 +8,23 @@ export const progressRoutes: FastifyPluginAsyncZod<Pick<AppDeps, 'content' | 'pr
   app,
   { content, progress },
 ) => {
-  app.get('/progress', { schema: { response: { 200: Progress } } }, (request) =>
-    progress.getProgress(request.learnerId),
+  app.get(
+    '/progress',
+    {
+      schema: {
+        summary: "The current learner's completed lessons and exercise attempts.",
+        response: { 200: Progress },
+      },
+    },
+    (request) => progress.getProgress(request.learnerId),
   );
 
   app.put(
     '/progress/:lessonId',
     {
       schema: {
+        summary:
+          'Mark a lesson complete. Idempotent. 409 if the lesson has exercises that have not all passed.',
         params: z.object({ lessonId: z.string() }),
         response: { 200: Progress, 404: ErrorResponse, 409: ErrorResponse },
       },

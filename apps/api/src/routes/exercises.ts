@@ -14,6 +14,8 @@ export const exerciseRoutes: FastifyPluginAsyncZod<
     {
       preHandler: rateLimit,
       schema: {
+        summary:
+          "Grade code against the exercise's tests, each in its own sandbox. Records the attempt; completes the lesson once all its exercises pass. Rate limited.",
         params: z.object({ id: z.string() }),
         body: SubmitRequest,
         response: { 200: SubmitResult, 404: ErrorResponse, 429: ErrorResponse, 503: ErrorResponse },

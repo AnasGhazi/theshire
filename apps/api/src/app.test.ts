@@ -56,3 +56,24 @@ describe('error handling', () => {
     });
   });
 });
+
+describe('request ids', () => {
+  it('generates one per request and returns it', async () => {
+    app = await buildApp(testApp());
+    const a = await app.inject({ method: 'GET', url: '/api/health' });
+    const b = await app.inject({ method: 'GET', url: '/api/health' });
+    expect(a.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
+    expect(a.headers['x-request-id']).not.toBe(b.headers['x-request-id']);
+  });
+
+  it('keeps an incoming X-Request-Id, including on errors', async () => {
+    app = await buildApp(testApp());
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/nope',
+      headers: { 'x-request-id': 'trace-123' },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.headers['x-request-id']).toBe('trace-123');
+  });
+});

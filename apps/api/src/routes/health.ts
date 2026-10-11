@@ -6,9 +6,19 @@ export const healthRoutes: FastifyPluginAsyncZod<Pick<AppDeps, 'probeDocker'>> =
   app,
   { probeDocker },
 ) => {
-  app.get('/health', { schema: { response: { 200: HealthResponse } } }, async () => ({
-    status: 'ok' as const,
-    uptimeSeconds: process.uptime(),
-    docker: await probeDocker(),
-  }));
+  app.get(
+    '/health',
+    {
+      schema: {
+        summary:
+          'Liveness check. Always 200 while the API is up; `docker.available` reports whether code can run.',
+        response: { 200: HealthResponse },
+      },
+    },
+    async () => ({
+      status: 'ok' as const,
+      uptimeSeconds: process.uptime(),
+      docker: await probeDocker(),
+    }),
+  );
 };

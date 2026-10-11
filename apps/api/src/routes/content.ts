@@ -9,14 +9,24 @@ export const contentRoutes: FastifyPluginAsyncZod<Pick<AppDeps, 'content'>> = as
   app,
   { content },
 ) => {
-  app.get('/courses', { schema: { response: { 200: CourseList } } }, async () => ({
-    courses: content.courses.map(toCourseSummary),
-  }));
+  app.get(
+    '/courses',
+    {
+      schema: {
+        summary: 'List all courses in catalog order.',
+        response: { 200: CourseList },
+      },
+    },
+    async () => ({
+      courses: content.courses.map(toCourseSummary),
+    }),
+  );
 
   app.get(
     '/courses/:slug',
     {
       schema: {
+        summary: 'A course with its lessons in order.',
         params: z.object({ slug: z.string() }),
         response: { 200: CourseDetail, 404: ErrorResponse },
       },
@@ -32,6 +42,8 @@ export const contentRoutes: FastifyPluginAsyncZod<Pick<AppDeps, 'content'>> = as
     '/lessons/:id',
     {
       schema: {
+        summary:
+          'A lesson as structured blocks. Hidden tests carry no call or expected output, and solutions are never included.',
         params: z.object({ id: z.string() }),
         response: { 200: Lesson, 404: ErrorResponse },
       },
