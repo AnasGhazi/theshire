@@ -9,6 +9,9 @@ async function setEditorCode(page: Page, code: string) {
 
 test('a learner runs code, fails, then passes an exercise and sees progress', async ({ page }) => {
   await page.goto('/');
+  // Title screen: loads the music, then waits for the visitor to enter.
+  await page.getByRole('button', { name: 'Enter the Shire' }).click();
+  await expect(page.getByRole('dialog', { name: 'The Shire is loading' })).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Python Basics' })).toBeVisible();
 
   await page.goto('/courses/python-basics');

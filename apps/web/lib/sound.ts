@@ -154,4 +154,11 @@ export const sfx = {
         },
       ]),
     ),
+  /** Gollum: a wet, warbling gulp. */
+  gollum: () =>
+    play([
+      { freq: 180, slideTo: 120, duration: 0.12, type: 'sawtooth', volume: 0.03 },
+      { freq: 150, slideTo: 95, at: 0.13, duration: 0.18, type: 'sawtooth', volume: 0.03 },
+      { freq: 2600, slideTo: 1800, at: 0.34, duration: 0.18, type: 'sine', volume: 0.012 },
+    ]),
 };

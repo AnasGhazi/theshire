@@ -190,3 +190,56 @@ export const GANDALF: SpriteSheet = {
     ],
   },
 };
+
+/** Peeks out of the logo door on the home page now and then. */
+export const GOLLUM: SpriteSheet = {
+  palette: {
+    o: '#2b2a1f',
+    s: '#cfcbab',
+    S: '#a9a585',
+    W: '#d8f1ff',
+    E: '#0e1a12',
+    g: '#9fe8ff',
+    m: '#5a3d33',
+    h: '#6f6a52',
+    f: '#cfcbab',
+  },
+  frames: {
+    peek: [
+      '...h.h.h...',
+      '..ossssso..',
+      '.osssssssso',
+      'osWWsssWWso',
+      'osWEsssWEso',
+      'osWWsssWWso',
+      '.osSsssSso.',
+      '..osmmmso..',
+      '...ossso...',
+      '.ff.....ff.',
+    ],
+    blink: [
+      '...h.h.h...',
+      '..ossssso..',
+      '.osssssssso',
+      'ossssssssso',
+      'ossSssssSso',
+      'ossssssssso',
+      '.osSsssSso.',
+      '..osmmmso..',
+      '...ossso...',
+      '.ff.....ff.',
+    ],
+    eyes: [
+      '...........',
+      '...........',
+      '...........',
+      '..gg...gg..',
+      '..gE...gE..',
+      '..gg...gg..',
+      '...........',
+      '...........',
+      '...........',
+      '...........',
+    ],
+  },
+};

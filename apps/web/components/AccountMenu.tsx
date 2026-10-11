@@ -45,7 +45,7 @@ export function AccountMenu() {
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
 
-  if (!auth?.googleEnabled) return null;
+  const [notConfigured, setNotConfigured] = useState(false);
 
   const notice = signInFailed && (
     <div
@@ -64,12 +64,18 @@ export function AccountMenu() {
     </div>
   );
 
-  if (!auth.user) {
+  if (!auth?.user) {
+    const enabled = auth?.googleEnabled ?? false;
     return (
       <div className="relative">
         {/* Plain link: sign-in is a full-page redirect to Google and back. */}
         <a
           href={api.auth.googleSignInUrl(pathname)}
+          onClick={(e) => {
+            if (enabled) return;
+            e.preventDefault();
+            setNotConfigured((v) => !v);
+          }}
           className="flex h-10 items-center gap-2.5 rounded-full border border-[#8e918f] bg-[#131314] px-3 text-sm font-semibold whitespace-nowrap text-[#e3e3e3] transition-colors hover:bg-[#1f1f20]"
         >
           <GoogleG className="size-5" />
@@ -77,11 +83,25 @@ export function AccountMenu() {
           <span className="sm:hidden">Sign in</span>
         </a>
         {notice}
+        {notConfigured && (
+          <div
+            role="status"
+            className="pop-in absolute top-full right-0 z-40 mt-3 w-80 rounded-lg border-2 border-line bg-raised p-4 text-sm"
+          >
+            <p className="font-bold">Google sign-in isn’t set up yet</p>
+            <p className="mt-1 text-muted">
+              Add <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> to{' '}
+              <code>.env</code> and restart to turn it on. Your progress is still saved in this
+              browser.
+            </p>
+          </div>
+        )}
       </div>
     );
   }
 
   const { user } = auth;
+
   const initial = (user.name ?? user.email ?? '?').charAt(0).toUpperCase();
   return (
     <div className="relative" ref={menu}>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Nunito, Pixelify_Sans } from 'next/font/google';
 import { AuthProvider } from '@/components/AuthProvider';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { ProgressProvider } from '@/components/ProgressProvider';
 import { ButtonClickSounds } from '@/components/SoundEffects';
 import { WhirlTransition } from '@/components/WhirlTransition';
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </ProgressProvider>
         <ButtonClickSounds />
         <WhirlTransition />
+        <LoadingScreen />
       </body>
     </html>
   );

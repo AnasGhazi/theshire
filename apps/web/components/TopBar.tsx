@@ -50,9 +50,6 @@ export function TopBar({
       <div className="ml-auto flex items-center gap-3 sm:gap-5">
         <SandboxStatus />
         <SoundToggle />
-        <Link href="/" className="btn btn-yellow btn-sm max-sm:hidden">
-          Courses
-        </Link>
         <AccountMenu />
       </div>
     </header>
