@@ -14,7 +14,7 @@ A small Codédex/Educative-style platform: text lessons written in Markdown with
 
 | Layer     | Choice                                                                                                               |
 | --------- | -------------------------------------------------------------------------------------------------------------------- |
-| Language  | TypeScript everywhere (strict mode)                                                                                  |
+| Language  | TypeScript everywhere (strict mode), Node 24 LTS                                                                     |
 | API       | Node 20+, Fastify, Zod for request/response validation                                                               |
 | Sandbox   | Docker (one fresh container per run), via the Docker CLI or `dockerode`                                              |
 | DB        | SQLite (`better-sqlite3`) for v1; keep data access behind a small repository module so it can move to Postgres later |
@@ -23,7 +23,7 @@ A small Codédex/Educative-style platform: text lessons written in Markdown with
 | CI        | GitHub Actions: lint, typecheck, test                                                                                |
 | Packaging | `docker-compose.yml` for local dev                                                                                   |
 
-Languages supported for execution in v1: **Python 3.12** and **Node 20 (JavaScript)**.
+Languages supported for execution in v1: **Python 3.12** and **Node 24 (JavaScript)**. (Node 20 reached end-of-life in April 2026.)
 
 ## 3. Repo structure
 
@@ -93,16 +93,16 @@ Parse lessons into a structured JSON shape the API returns: `blocks: [{type: "ma
 
 All JSON, validated with Zod, schemas live in `packages/shared`.
 
-| Method | Path                        | Purpose                                                                                                           |
-| ------ | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/courses`              | List courses (id, title, description, lesson count)                                                               |
-| GET    | `/api/courses/:slug`        | Course detail + ordered lesson list                                                                               |
-| GET    | `/api/lessons/:id`          | Lesson as structured blocks                                                                                       |
-| POST   | `/api/run`                  | Execute code. Body: `{ language, code }`. Returns `{ stdout, stderr, exitCode, timedOut, truncated, durationMs }` |
-| POST   | `/api/exercises/:id/submit` | Run learner code against the exercise's tests. Returns per-test pass/fail + overall result                        |
-| GET    | `/api/progress`             | Learner's completed lessons/exercises                                                                             |
-| PUT    | `/api/progress/:lessonId`   | Mark lesson complete                                                                                              |
-| GET    | `/api/health`               | Liveness + Docker availability check                                                                              |
+| Method | Path                        | Purpose                                                                                                                      |
+| ------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/courses`              | List courses (id, title, description, lesson count)                                                                          |
+| GET    | `/api/courses/:slug`        | Course detail + ordered lesson list                                                                                          |
+| GET    | `/api/lessons/:id`          | Lesson as structured blocks                                                                                                  |
+| POST   | `/api/run`                  | Execute code. Body: `{ language, code }`. Returns `{ stdout, stderr, exitCode, timedOut, oomKilled, truncated, durationMs }` |
+| POST   | `/api/exercises/:id/submit` | Run learner code against the exercise's tests. Returns per-test pass/fail + overall result                                   |
+| GET    | `/api/progress`             | Learner's completed lessons/exercises                                                                                        |
+| PUT    | `/api/progress/:lessonId`   | Mark lesson complete                                                                                                         |
+| GET    | `/api/health`               | Liveness + Docker availability check                                                                                         |
 
 **Identity (v1):** anonymous learner. Issue a signed, HTTP-only cookie with a random learner ID on first visit. No signup. Design so real auth can replace it without touching route handlers (middleware that sets `request.learnerId`).
 
@@ -125,7 +125,7 @@ Required flags/limits on every container:
 - Cap captured stdout/stderr (e.g. **64 KB** each); mark `truncated: true` if exceeded
 - Code delivered via stdin or a temp file mounted read-only. Never interpolate user code into a shell string.
 
-Images: minimal (e.g. `python:3.12-slim`, `node:20-slim`), no extra tools, no pip/npm network access at runtime.
+Images: minimal (e.g. `python:3.12-slim`, `node:24-slim`), no extra tools, no pip/npm network access at runtime.
 
 Also build:
 

@@ -1,4 +1,19 @@
 services:
+  # Build-only services: they produce the sandbox images the API runs code in, then exit.
+  runner-python:
+    image: theshire/runner-python:latest
+    build: runner/images/python
+    entrypoint: ['true']
+    network_mode: none
+    restart: 'no'
+
+  runner-node:
+    image: theshire/runner-node:latest
+    build: runner/images/node
+    entrypoint: ['true']
+    network_mode: none
+    restart: 'no'
+
   api:
     build:
       context: .
@@ -8,6 +23,15 @@ services:
       LOG_LEVEL: info
     ports:
       - '4000:4000'
+    # Lets the API start sibling sandbox containers on the host daemon. This is root-equivalent
+    # access to the host: never expose this setup publicly as-is (see docs/security.md).
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      runner-python:
+        condition: service_completed_successfully
+      runner-node:
+        condition: service_completed_successfully
 
   web:
     build:

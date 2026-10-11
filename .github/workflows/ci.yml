@@ -19,3 +19,16 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  sandbox:
+    # Hostile-input tests against real containers (GitHub's Ubuntu runners include Docker).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run runner:build
+      - run: npm run test:sandbox

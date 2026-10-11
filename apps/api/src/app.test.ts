@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ErrorResponse, HealthResponse } from '@theshire/shared';
 import { buildApp, type App } from './app';
+import type { Runner } from './sandbox/types';
+
+const noRunner: Runner = {
+  run: () => Promise.reject(new Error('runner not expected in this test')),
+};
 
 let app: App | undefined;
 
@@ -11,7 +16,10 @@ afterEach(async () => {
 
 describe('GET /api/health', () => {
   it('returns 200 with docker status when docker is available', async () => {
-    app = await buildApp({ probeDocker: async () => ({ available: true, version: '27.0.0' }) });
+    app = await buildApp({
+      probeDocker: async () => ({ available: true, version: '27.0.0' }),
+      runner: noRunner,
+    });
     const res = await app.inject({ method: 'GET', url: '/api/health' });
 
     expect(res.statusCode).toBe(200);
@@ -20,7 +28,7 @@ describe('GET /api/health', () => {
   });
 
   it('still returns 200 (liveness) when docker is unavailable', async () => {
-    app = await buildApp({ probeDocker: async () => ({ available: false }) });
+    app = await buildApp({ probeDocker: async () => ({ available: false }), runner: noRunner });
     const res = await app.inject({ method: 'GET', url: '/api/health' });
 
     expect(res.statusCode).toBe(200);
@@ -30,7 +38,7 @@ describe('GET /api/health', () => {
 
 describe('error handling', () => {
   it('returns the standard error shape for unknown routes', async () => {
-    app = await buildApp({ probeDocker: async () => ({ available: false }) });
+    app = await buildApp({ probeDocker: async () => ({ available: false }), runner: noRunner });
     const res = await app.inject({ method: 'GET', url: '/api/nope' });
 
     expect(res.statusCode).toBe(404);
@@ -42,6 +50,7 @@ describe('error handling', () => {
       probeDocker: async () => {
         throw new Error('secret internals');
       },
+      runner: noRunner,
     });
     const res = await app.inject({ method: 'GET', url: '/api/health' });
 

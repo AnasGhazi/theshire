@@ -1,9 +1,30 @@
 import { buildApp } from './app';
 import { loadConfig } from './config';
 import { probeDocker } from './docker';
+import { startCleanupJob } from './sandbox/cleanup';
+import { DockerRunner } from './sandbox/docker-runner';
+import { ConcurrencyLimiter, limitRunner } from './sandbox/limiter';
 
 const config = loadConfig();
-const app = await buildApp({ logger: { level: config.LOG_LEVEL }, probeDocker });
+const dockerRunner = new DockerRunner(config.sandbox);
+const limiter = new ConcurrencyLimiter(config.sandbox.maxConcurrent, config.sandbox.maxQueue);
+
+const app = await buildApp({
+  logger: { level: config.logLevel },
+  probeDocker,
+  runner: limitRunner(dockerRunner, limiter),
+});
+
+const stopCleanup = startCleanupJob({
+  intervalMs: config.sandbox.cleanupIntervalMs,
+  onRemoved: (ids) => app.log.warn({ count: ids.length }, 'removed orphaned sandbox containers'),
+  onError: (err) => app.log.error({ err }, 'sandbox cleanup failed'),
+});
+
+app.addHook('onClose', async () => {
+  stopCleanup();
+  await dockerRunner.killAll();
+});
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
@@ -12,4 +33,4 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   });
 }
 
-await app.listen({ host: config.HOST, port: config.PORT });
+await app.listen({ host: config.host, port: config.port });
