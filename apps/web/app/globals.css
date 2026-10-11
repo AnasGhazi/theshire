@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-shire-bg: #0a0f1e;
+  --color-shire-panel: #1a2236;
+  --color-shire-editor: #0e1f4a;
+  --color-shire-muted: #8b95a8;
+  --color-shire-blue: #4aa3ff;
+  --color-shire-yellow: #ffd23f;
+  --color-shire-green: #7ed957;
+  --font-pixel: var(--font-silkscreen);
+  --font-sans: var(--font-nunito);
+}
+
+body {
+  background: var(--color-shire-bg);
+  color: white;
+}
